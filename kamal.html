@@ -34,6 +34,10 @@
             font-family: 'Inter', sans-serif;
         }
 
+        :root {
+            --sidebar-width: 360px; /* Default Width */
+        }
+
         body {
             display: flex;
             height: 100vh;
@@ -43,32 +47,49 @@
 
         /* --- Modern Glass Sidebar --- */
         .sidebar {
-            width: 360px;
-            min-width: 360px; /* Prevent crushing */
-            background-color: rgba(30, 41, 59, 0.95); /* Slate 800 with opacity */
+            width: var(--sidebar-width);
+            min-width: 250px; 
+            max-width: 80vw;
+            background-color: rgba(30, 41, 59, 0.95); 
             color: #f1f5f9;
             display: flex;
             flex-direction: column;
             padding: 24px;
             box-shadow: 4px 0 24px rgba(0,0,0,0.25);
             z-index: 2000;
-            /* Changed from transform to margin-left for proper layout reflow */
             transition: margin-left 0.3s ease; 
             backdrop-filter: blur(10px);
             border-right: 1px solid rgba(255,255,255,0.05);
             position: relative;
-            margin-left: 0; /* Default open state */
+            margin-left: 0;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed {
-            margin-left: -360px; /* Pull off-screen */
+            margin-left: calc(var(--sidebar-width) * -1);
+        }
+
+        /* Resizer Handle */
+        .sidebar-resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 2001;
+            transition: background 0.2s;
+        }
+        .sidebar-resizer:hover, .sidebar-resizer.resizing {
+            background: #00d2d3;
         }
 
         /* Toggle Button */
         .sidebar-toggle {
             position: absolute;
             right: -40px;
-            bottom: 20px; /* Changed to bottom */
+            bottom: 20px; 
             width: 40px;
             height: 40px;
             background-color: #00d2d3;
@@ -97,13 +118,14 @@
             align-items: center;
             gap: 12px;
             letter-spacing: -0.5px;
+            flex-shrink: 0;
         }
 
-        /* Section Styling */
+        /* Collapsible Sections */
         .action-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0; /* Prevent header squishing */
         }
 
         .action-header {
@@ -113,6 +135,34 @@
             letter-spacing: 1.2px;
             font-weight: 700;
             margin-bottom: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .action-header:hover {
+            color: #fff;
+        }
+        .action-header i {
+            transition: transform 0.3s;
+        }
+        .action-header.collapsed i {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-bottom 0.3s;
+            max-height: 500px; /* Arbitrary large height */
+            opacity: 1;
+            margin-bottom: 20px;
+        }
+        
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
         }
 
         /* Modern Inputs */
@@ -166,10 +216,11 @@
 
         /* List Area */
         .boundary-list-container {
-            flex: 1;
+            flex: 1; /* Takes remaining space */
             overflow-y: auto;
-            margin-top: 10px;
+            margin-top: 5px;
             padding-right: 4px;
+            min-height: 100px; /* Ensure at least some visibility */
         }
         .boundary-list-container::-webkit-scrollbar { width: 4px; }
         .boundary-list-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -237,7 +288,6 @@
             flex: 1;
             position: relative;
             background: #0f172a;
-            /* Ensure map resizes properly with flex */
             transition: width 0.3s ease; 
         }
 
@@ -344,6 +394,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-shrink: 0;
         }
         .avatar-circle {
             width: 32px; height: 32px;
@@ -361,6 +412,9 @@
 
     <!-- Sidebar -->
     <div class="sidebar" id="mainSidebar">
+        <!-- Resizer Handle -->
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+
         <!-- Toggle Button -->
         <div class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
             <i class="fa-solid fa-bars"></i>
@@ -370,50 +424,59 @@
             <i class="fa-solid fa-satellite-dish"></i> KaMaL
         </div>
         
+        <!-- Navigation Section -->
         <div class="action-section">
-            <div class="action-header">Navigation</div>
-            
-            <div class="flex gap-2 mb-3">
-                <button id="locateBtn" class="action-btn btn-primary" style="margin-top:0; flex: 1;">
-                    <i class="fa-solid fa-location-crosshairs"></i> GPS
-                </button>
+            <div class="action-header" onclick="toggleSection('navContent', this)">
+                <span>Navigation</span>
+                <i class="fa-solid fa-chevron-down text-xs"></i>
             </div>
-
-            <div class="flex gap-2">
-                <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
-                <button id="searchBtn" class="action-btn btn-dark" style="margin-top:0; width: auto; padding: 0 15px;">
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
+            <div id="navContent" class="section-content">
+                <div class="flex gap-2 mb-3">
+                    <button id="locateBtn" class="action-btn btn-primary" style="margin-top:0; flex: 1;">
+                        <i class="fa-solid fa-location-crosshairs"></i> GPS
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
+                    <button id="searchBtn" class="action-btn btn-dark" style="margin-top:0; width: auto; padding: 0 15px;">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
+        <!-- Toolkit Section -->
         <div class="action-section">
-            <div class="action-header">Toolkit</div>
-            
-            <button id="editModeBtn" class="action-btn btn-warning mb-3" onclick="toggleEditMode()">
-                <i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries
-            </button>
-
-            <!-- Filename Input -->
-            <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input mb-2">
-            
-            <div class="flex gap-2 mt-2">
-                <button id="downloadBtn" class="action-btn btn-dark" style="margin-top:0;" title="Download KML">
-                    <i class="fa-solid fa-download"></i> Save
-                </button>
-                <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline" style="margin-top:0;" title="Upload KML">
-                    <i class="fa-solid fa-upload"></i> Load
-                </button>
-                <button id="clearBtn" class="action-btn btn-secondary" style="margin-top:0; width: auto;" title="Clear All">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+            <div class="action-header" onclick="toggleSection('toolContent', this)">
+                <span>Toolkit</span>
+                <i class="fa-solid fa-chevron-down text-xs"></i>
             </div>
-            
-            <!-- Hidden Upload Input -->
-            <input type="file" id="kmlFileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(this)">
+            <div id="toolContent" class="section-content">
+                <button id="editModeBtn" class="action-btn btn-warning mb-3" onclick="toggleEditMode()">
+                    <i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries
+                </button>
+
+                <!-- Filename Input -->
+                <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input mb-2">
+                
+                <div class="flex gap-2 mt-2">
+                    <button id="downloadBtn" class="action-btn btn-dark" style="margin-top:0;" title="Download KML">
+                        <i class="fa-solid fa-download"></i> Save
+                    </button>
+                    <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline" style="margin-top:0;" title="Upload KML">
+                        <i class="fa-solid fa-upload"></i> Load
+                    </button>
+                    <button id="clearBtn" class="action-btn btn-secondary" style="margin-top:0; width: auto;" title="Clear All">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <!-- Hidden Upload Input -->
+                <input type="file" id="kmlFileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(this)">
+            </div>
         </div>
 
-        <div class="action-header flex justify-between items-center mt-2">
+        <!-- My Fields Section -->
+        <div class="action-header flex justify-between items-center mt-2" style="cursor: default;">
             <span>My Fields</span>
             <span id="fieldCount" class="bg-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-full">0</span>
         </div>
@@ -552,15 +615,51 @@
         var layerCounter = 1;
         var isEditMode = false;
 
-        // --- Sidebar Toggle Logic (REVISED) ---
+        // --- NEW: Section Toggle Logic ---
+        function toggleSection(contentId, headerEl) {
+            var content = document.getElementById(contentId);
+            content.classList.toggle('collapsed');
+            headerEl.classList.toggle('collapsed');
+        }
+
+        // --- RESIZABLE SIDEBAR LOGIC ---
+        const sidebar = document.getElementById('mainSidebar');
+        const resizer = document.getElementById('sidebarResizer');
+        
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            sidebar.style.transition = 'none'; 
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            let newWidth = e.clientX;
+            if (newWidth < 250) newWidth = 250;
+            if (newWidth > window.innerWidth * 0.8) newWidth = window.innerWidth * 0.8;
+            document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('resizing');
+                document.body.style.cursor = 'default';
+                sidebar.style.transition = 'margin-left 0.3s ease'; 
+                map.invalidateSize();
+            }
+        });
+
+        // --- Sidebar Toggle Logic ---
         function toggleSidebar() {
             var sidebar = document.getElementById('mainSidebar');
             sidebar.classList.toggle('collapsed');
-            
-            // CRITICAL: Refresh map size after transition
             setTimeout(function() {
                 map.invalidateSize();
-            }, 350); // Slightly longer than CSS transition to be safe
+            }, 350); 
         }
 
         // --- AUTO-SAVE LOGIC ---
@@ -582,7 +681,6 @@
                     onEachFeature: function(feature, layer) {
                         layer.feature = layer.feature || feature;
                         
-                        // Restore modern style
                         if (feature.geometry.type !== 'Point') {
                             if(layer.setStyle) layer.setStyle({ color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 });
                         } else {
@@ -634,7 +732,7 @@
                 });
                 
                 saveData();
-                updateSidePanel();
+                updateSidePanel(); // Recalculate stats
                 showToast("Adjustments Saved");
             }
         }
