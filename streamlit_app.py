@@ -770,7 +770,7 @@ if not st.session_state['calculated']:
         <p style="color:#94a3b8; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
     </div>
     """, unsafe_allow_html=True)
-    m = geemap.Map(height=500, basemap="HYBRID")
+    m = geemap.Map(height=500, basemap="GOOGLE_HYBRID")
     if st.session_state['roi']:
         m.centerObject(st.session_state['roi'], 12)
         m.addLayer(ee.Image().paint(st.session_state['roi'], 2, 3), {'palette': '#00f2ff'}, 'Target ROI')
@@ -891,7 +891,7 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col_map:
-                m = geemap.Map(height=700, basemap="HYBRID")
+                m = geemap.Map(height=700, basemap="GOOGLE_HYBRID")
                 m.centerObject(roi, 13)
                 m.addLayer(index_img, vis_params, p['idx'])
                 m.add_colorbar(vis_params, label=p['idx'], layer_name="Legend")
@@ -904,7 +904,7 @@ else:
         
         # 1. SETUP MAP
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap="HYBRID")
+        m = geemap.Map(height=700, basemap="GOOGLE_HYBRID")
         m.centerObject(roi, 13)
         
         # S2 Background for all modes
@@ -1153,7 +1153,7 @@ else:
     # ==========================================
     elif p['mode'] == "Geospatial-embeddings-use-cases":
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap="HYBRID")
+        m = geemap.Map(height=700, basemap="GOOGLE_HYBRID")
         m.centerObject(roi, 13)
         
         target_year = int(p['embedding_year'])
@@ -1419,7 +1419,7 @@ else:
     # ==========================================
     elif p['mode'] == "Landslide Detection (SAR)":
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap="HYBRID")
+        m = geemap.Map(height=700, basemap="GOOGLE_HYBRID")
         m.centerObject(roi, 13)
         
         with st.spinner("🛰️ Calculating SAR Backscatter Changes & DEM Analysis..."):
