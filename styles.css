@@ -996,3 +996,185 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ============== ENHANCED APPS SECTION ============== */
+/* Premium app card styling with advanced hover effects */
+.app-card {
+  background: var(--white);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(30, 60, 114, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  background-image: 
+    linear-gradient(var(--white), var(--white)),
+    linear-gradient(135deg, #1e3c72, #00d4ff);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-card:hover {
+  transform: translateY(-16px);
+  box-shadow: 0 12px 48px rgba(30, 60, 114, 0.2);
+  border-color: var(--accent-color);
+}
+
+.app-card:hover::before {
+  transform: scaleX(1);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.app-header i {
+  font-size: 3rem;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(30, 60, 114, 0.1));
+  border-radius: 12px;
+  color: var(--accent-color);
+  transition: all 0.3s ease;
+}
+
+.app-card:hover .app-header i {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--white);
+  transform: scale(1.1) rotate(5deg);
+}
+
+.app-header h3 {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.app-card p {
+  color: var(--light-text);
+  margin-bottom: 24px;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.app-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: var(--white);
+  box-shadow: 0 4px 15px rgba(30, 60, 114, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(30, 60, 114, 0.35);
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-color);
+  border: 2.5px solid var(--primary-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-color);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.btn-secondary:hover {
+  color: var(--white);
+  transform: translateY(-3px);
+}
+
+.btn-secondary:hover::before {
+  left: 0;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  margin-top: 50px;
+}
+
+@media (max-width: 768px) {
+  .apps-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .app-card {
+    padding: 30px 20px;
+  }
+  
+  .app-header {
+    gap: 15px;
+  }
+  
+  .app-header i {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+  }
+  
+  .app-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .btn {
+    flex: 1;
+  }
+}
