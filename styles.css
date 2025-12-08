@@ -1262,3 +1262,9 @@ body {
     font-size: 1rem;
   }
 }
+
+
+/* Force app cards to single row */
+.app-card {
+ max-width: 300px !important;
+}
