@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps & Tools - SpecTralNi30</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .apps-hero { background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); padding: 80px 20px; text-align: center; color: white; }
+        .apps-hero h1 { font-size: 3rem; margin-bottom: 20px; }
+        .apps-hero p { font-size: 1.2rem; opacity: 0.95; }
+        .apps-container { max-width: 1200px; margin: 60px auto; padding: 0 20px; }
+        .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 40px; margin: 50px 0; }
+        .app-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15); transition: all 0.3s ease; }
+        .app-card:hover { transform: translateY(-15px); box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+        .app-image { width: 100%; height: 250px; object-fit: cover; }
+        .app-info { padding: 30px; }
+        .app-icon { font-size: 3rem; color: var(--accent-color); margin-bottom: 15px; }
+        .app-title { font-size: 1.8rem; color: var(--primary-color); margin-bottom: 15px; font-weight: bold; }
+        .app-description { color: var(--light-text); margin-bottom: 20px; line-height: 1.8; }
+        .app-features { list-style: none; margin: 20px 0; }
+        .app-features li { padding: 8px 0; padding-left: 25px; position: relative; color: var(--text-color); }
+        .app-features li:before { content: "✓"; position: absolute; left: 0; color: var(--accent-color); font-weight: bold; }
+        .app-buttons { display: flex; gap: 15px; margin-top: 25px; }
+        .app-btn { flex: 1; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.3s; font-size: 0.95rem; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--secondary-color); transform: scale(1.05); }
+        .btn-secondary { background: var(--accent-color); color: var(--primary-color); }
+        .btn-secondary:hover { background: #00b8d4; transform: scale(1.05); }
+        .features-section { background: var(--bg-color); padding: 60px 20px; margin-top: 60px; }
+        .features-title { text-align: center; font-size: 2.5rem; color: var(--primary-color); margin-bottom: 50px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .feature-box { background: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm); }
+        .feature-box i { font-size: 2.5rem; color: var(--accent-color); margin-bottom: 15px; }
+        .feature-box h3 { color: var(--primary-color); margin-bottom: 15px; }
+        .back-link { display: inline-block; margin: 20px 0; padding: 10px 20px; background: var(--primary-color); color: white; text-decoration: none; border-radius: 5px; }
+        .back-link:hover { background: var(--secondary-color); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-satellite"></i>
+                <span>SpecTralNi30</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-link">Home</a></li>
+                <li><a href="index.html#about" class="nav-link">About</a></li>
+                <li><a href="index.html#services" class="nav-link">Services</a></li>
+                <li><a href="index.html#projects" class="nav-link">Projects</a></li>
+                <li><a href="tech-notes.html" class="nav-link">Tech Notes</a></li>
+                <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="apps-hero">
+        <h1><i class="fas fa-cube"></i> Interactive Apps & Tools</h1>
+        <p>Powerful web applications for geospatial data analysis and visualization</p>
+    </div>
+
+    <div class="apps-container">
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+        <div class="apps-grid">
+            <!-- SpecTralNi30 App -->
+            <div class="app-card">
+                <img src="https://images.unsplash.com/photo-1642132402322-3a40c1e86309?w=500&h=250&fit=crop" alt="SpecTralNi30 App" class="app-image">
+                <div class="app-info">
+                    <div class="app-icon"><i class="fas fa-satellite-dish"></i></div>
+                    <h2 class="app-title">SpecTralNi30</h2>
+                    <p class="app-description">Advanced geospatial analysis platform for satellite imagery processing, vegetation monitoring, and LULC classification with interactive visualizations.</p>
+                    <ul class="app-features">
+                        <li>Real-time Sentinel data processing</li>
+                        <li>Vegetation index calculations</li>
+                        <li>Flood inundation mapping</li>
+                        <li>Interactive maps and dashboards</li>
+                        <li>ML-powered classification</li>
+                    </ul>
+                    <div class="app-buttons">
+                        <a href="https://spectralni30.streamlit.app/" target="_blank" class="app-btn btn-primary"><i class="fas fa-rocket"></i> Launch App</a>
+                        <a href="#" class="app-btn btn-secondary"><i class="fas fa-file-alt"></i> Docs</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GeoFormatX App -->
+            <div class="app-card">
+                <img src="https://images.unsplash.com/photo-1626925206488-7aeda6fb85f3?w=500&h=250&fit=crop" alt="GeoFormatX App" class="app-image">
+                <div class="app-info">
+                    <div class="app-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <h2 class="app-title">GeoFormatX</h2>
+                    <p class="app-description">Universal geospatial data format converter with support for GeoJSON, Shapefile, GeoTIFF, NetCDF, and more. Convert, validate, and transform geospatial data effortlessly.</p>
+                    <ul class="app-features">
+                        <li>Multiple format support</li>
+                        <li>Batch conversion capabilities</li>
+                        <li>Data validation & repair</li>
+                        <li>CRS transformation</li>
+                        <li>Real-time preview</li>
+                    </ul>
+                    <div class="app-buttons">
+                        <a href="https://geoformatx.streamlit.app/" target="_blank" class="app-btn btn-primary"><i class="fas fa-rocket"></i> Launch App</a>
+                        <a href="#" class="app-btn btn-secondary"><i class="fas fa-file-alt"></i> Docs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+        <h2 class="features-title"><i class="fas fa-star"></i> Key Features</h2>
+        <div class="features-grid">
+            <div class="feature-box">
+                <i class="fas fa-tachometer-alt"></i>
+                <h3>Lightning Fast</h3>
+                <p>Optimized processing engines for rapid analysis of large satellite datasets</p>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-mobile-alt"></i>
+                <h3>Fully Responsive</h3>
+                <p>Works seamlessly on desktop, tablet, and mobile devices</p>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-lock"></i>
+                <h3>Secure & Private</h3>
+                <p>All data processing happens server-side with no local storage</p>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-code"></i>
+                <h3>Open Source</h3>
+                <p>Built with open-source libraries and available on GitHub</p>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-chart-line"></i>
+                <h3>Analytics Ready</h3>
+                <p>Export results in multiple formats for further analysis</p>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Educational</h3>
+                <p>Perfect for learning geospatial data science concepts</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="apps-container">
+        <h2 style="text-align: center; color: var(--primary-color); margin-top: 60px; font-size: 2rem;">Technology Stack</h2>
+        <div style="background: var(--bg-color); padding: 30px; border-radius: 10px; margin-top: 20px; text-align: center;">
+            <p style="font-size: 1.1rem; color: var(--text-color); margin-bottom: 20px;"><strong>Built with:</strong></p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                <span style="background: white; padding: 10px 20px; border-radius: 5px; box-shadow: var(--shadow-sm);"><i class="fab fa-python" style="color: #3776ab;"></i> Python</span>
+                <span style="background: white; padding: 10px 20px; border-radius: 5px; box-shadow: var(--shadow-sm);"><i class="fas fa-stream" style="color: #FF2C00;"></i> Streamlit</span>
+                <span style="background: white; padding: 10px 20px; border-radius: 5px; box-shadow: var(--shadow-sm);"><i class="fas fa-map-marked-alt" style="color: #00d4ff;"></i> GeoPandas</span>
+                <span style="background: white; padding: 10px 20px; border-radius: 5px; box-shadow: var(--shadow-sm);"><i class="fas fa-layer-group" style="color: #6ba300;"></i> Rasterio</span>
+                <span style="background: white; padding: 10px 20px; border-radius: 5px; box-shadow: var(--shadow-sm);"><i class="fas fa-cube" style="color: #4285F4;"></i> Folium</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 SpecTralNi30 - Geospatial Data Science. All rights reserved.</p>
+            <p>Transforming satellite imagery into insights</p>
+        </div>
+    </footer>
+</body>
+</html>
