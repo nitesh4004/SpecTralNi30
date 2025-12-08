@@ -4,97 +4,938 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KaMaL - KML Boundary Maker</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/turf/turf.min.js"></script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Turf.js for Area & Perimeter Calculations -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- toGeoJSON for KML Import -->
+    <script src="https://unpkg.com/@mapbox/togeojson/togeojson.js"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; }
-        body { display: flex; height: 100vh; background: #f4f4f4; overflow: hidden; }
-        .sidebar { width: 340px; background: #1a252f; color: white; display: flex; flex-direction: column; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); z-index: 2000; overflow-y: auto; }
-        .logo { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #00d2d3; display: flex; align-items: center; gap: 10px; }
-        .action-section { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #34495e; }
-        .action-header { font-size: 11px; color: #95a5a6; text-transform: uppercase; margin-bottom: 8px; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 8px; background: #2c3e50; border: 1px solid #34495e; color: #ecf0f1; border-radius: 4px; font-size: 13px; }
-        input:focus, textarea:focus { outline: none; border-color: #00d2d3; }
-        button { width: 100%; padding: 8px; margin-top: 8px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-primary { background: #00d2d3; color: #1a252f; }
-        .btn-primary:hover { background: #00b5b6; }
-        .btn-secondary { background: #e74c3c; color: white; }
-        .btn-secondary:hover { background: #c0392b; }
-        .btn-dark { background: #34495e; border: 1px solid #2c3e50; color: #ecf0f1; }
-        .btn-dark:hover { background: #2c3e50; }
-        .boundary-list { flex: 1; overflow-y: auto; margin-top: 10px; }
-        .main-content { flex: 1; display: flex; flex-direction: column; }
-        .top-bar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        #map { flex: 1; width: 100%; height: 100%; }
-        .coord-box { position: absolute; bottom: 20px; right: 20px; background: rgba(255, 255, 255, 0.95); padding: 10px 15px; border-radius: 4px; font-size: 12px; font-family: monospace; color: #2c3e50; pointer-events: none; z-index: 1000; }
-        .status-toast { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(26, 37, 47, 0.9); color: white; padding: 10px 20px; border-radius: 20px; z-index: 2000; opacity: 0; transition: opacity 0.3s; }
+        /* General Reset & Layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 340px;
+            background-color: #1a252f;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 2000;
+            overflow-y: hidden;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #00d2d3;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .action-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #34495e;
+            flex-shrink: 0;
+        }
+
+        .action-header {
+            font-size: 11px;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* Input & Buttons */
+        .sidebar-input {
+            background-color: #2c3e50;
+            border: 1px solid #34495e;
+            color: #ecf0f1;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .sidebar-input:focus {
+            outline: none;
+            border-color: #00d2d3;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-primary { background-color: #00d2d3; color: #1a252f; }
+        .btn-primary:hover { background-color: #00b5b6; }
+        .btn-secondary { background-color: #e74c3c; color: white; }
+        .btn-secondary:hover { background-color: #c0392b; }
+        .btn-dark { background-color: #34495e; border: 1px solid #2c3e50; color: #ecf0f1; }
+        .btn-dark:hover { background-color: #2c3e50; }
+        .btn-outline { background: transparent; border: 1px dashed #7f8c8d; color: #bdc3c7; }
+        .btn-outline:hover { border-color: #ecf0f1; color: #ecf0f1; background: rgba(255,255,255,0.05); }
+        .btn-success { background-color: #27ae60; color: white; }
+        .btn-success:hover { background-color: #2ecc71; }
+        .btn-warning { background-color: #f39c12; color: white; }
+        .btn-warning:hover { background-color: #e67e22; }
+
+        /* Boundary List Area */
+        .boundary-list-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 5px;
+        }
+        
+        .boundary-list-container::-webkit-scrollbar { width: 6px; }
+        .boundary-list-container::-webkit-scrollbar-track { background: #1a252f; }
+        .boundary-list-container::-webkit-scrollbar-thumb { background: #34495e; border-radius: 3px; }
+
+        .boundary-item {
+            background: #2c3e50;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #00d2d3;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: background 0.2s;
+        }
+        .boundary-item:hover {
+            background: #34495e;
+        }
+        .boundary-info {
+            flex: 1;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .boundary-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #ecf0f1;
+        }
+        .boundary-meta {
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 2px;
+        }
+        .boundary-stats {
+            font-size: 10px;
+            color: #f1c40f; /* Yellow for stats */
+            margin-top: 2px;
+            font-family: monospace;
+        }
+        .boundary-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 8px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .icon-btn.delete:hover { color: #e74c3c; }
+
+        .user-profile {
+            padding-top: 15px;
+            border-top: 1px solid #34495e;
+            font-size: 12px;
+            color: #7f8c8d;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .top-bar {
+            height: 60px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .status-indicator {
+            font-size: 14px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .coord-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-family: monospace;
+            color: #2c3e50;
+            pointer-events: none;
+        }
+        
+        .fab {
+            position: absolute;
+            bottom: 30px;
+            left: 30px; 
+            background-color: #00d2d3;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        .fab:hover { transform: scale(1.1); }
+
+        .leaflet-draw-toolbar a {
+            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-retina .leaflet-draw-toolbar a {
+            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png');
+        }
+
+        #statusToast {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 37, 47, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 2000;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a252f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #00d2d3;
+            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.1);
+        }
+
+        .stats-badge {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #d97706; font-weight: bold; }
+        .stat-value { font-weight: bold; font-size: 14px; }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo"><i class="fa-solid fa-satellite"></i> KaMaL</div>
+        <div class="logo">
+            <i class="fa-solid fa-satellite"></i> KaMaL
+        </div>
+        
         <div class="action-section">
             <div class="action-header">Navigation</div>
-            <input type="text" id="searchCoords" placeholder="Lat, Lng" value="28.6, 77.2">
-            <button onclick="searchLocation()" class="btn-dark"><i class="fa-solid fa-magnifying-glass"></i> Go</button>
+            
+            <div class="mb-2">
+                <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
+            </div>
+            <button id="searchBtn" class="action-btn btn-dark">
+                <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Go to Coords
+            </button>
         </div>
+
         <div class="action-section">
             <div class="action-header">Tools</div>
-            <input type="text" id="fileName" placeholder="Filename">
-            <button onclick="downloadKML()" class="btn-primary"><i class="fa-solid fa-download"></i> Download KML</button>
-            <input type="file" id="kmlInput" accept=".kml" style="display:none" onchange="uploadKML(this)">
-            <button onclick="document.getElementById('kmlInput').click()" class="btn-dark" style="border: 1px dashed; color: #bdc3c7;"><i class="fa-solid fa-upload"></i> Upload</button>
-            <button onclick="clearAll()" class="btn-secondary"><i class="fa-solid fa-trash"></i> Clear</button>
+            
+            <!-- NEW: Toggle Edit Mode Button -->
+            <button id="editModeBtn" class="action-btn btn-outline mb-3" onclick="toggleEditMode()">
+                <i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries
+            </button>
+
+            <!-- Filename Input -->
+            <div class="mb-2">
+                <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input">
+            </div>
+            <button id="downloadBtn" class="action-btn btn-primary">
+                <i class="fa-solid fa-download"></i> Download All KML
+            </button>
+            
+            <!-- Upload KML Input (Hidden) -->
+            <input type="file" id="kmlFileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(this)">
+            
+            <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline">
+                <i class="fa-solid fa-upload"></i> Upload KML
+            </button>
+            
+            <button id="clearBtn" class="action-btn btn-secondary">
+                <i class="fa-solid fa-trash"></i> Clear All
+            </button>
         </div>
-        <div style="text-align: center; color: #7f8c8d; font-size: 12px; margin-top: auto;">
-            Logged in as Nitesh Kumar<br><span style="color: #27ae60;">● Online</span>
+
+        <div class="action-header flex justify-between items-center">
+            <span>Saved Fields</span>
+            <span id="fieldCount" class="bg-gray-700 text-xs px-2 py-0.5 rounded text-gray-300">0</span>
         </div>
-    </div>
-    <div class="main-content">
-        <div class="top-bar">
-            <h3 style="font-size: 18px; font-weight: 600; color: #2c3e50;">Geospatial Boundary Mapper</h3>
-            <span style="color: #27ae60; font-weight: 600;"><i class="fa-solid fa-check-circle"></i> System Ready</span>
+        <div class="boundary-list-container" id="boundaryList">
+            <div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>
         </div>
-        <div id="statusToast" class="status-toast">Action Completed</div>
-        <div id="map"></div>
-        <div class="coord-box" id="coords">Lat: 00.0000, Lng: 00.0000</div>
+
+        <div class="user-profile">
+            Logged in as: Nitesh Kumar<br>
+            <span style="color: #27ae60;"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Online</span>
+        </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h3 class="text-lg font-semibold text-gray-700">Geospatial Dashboard</h3>
+            <div class="flex items-center gap-3">
+                 <span class="status-indicator"><i class="fa-solid fa-check-circle"></i> System Ready</span>
+            </div>
+        </div>
+        
+        <div id="statusToast">Action Completed</div>
+
+        <div id="map"></div>
+        
+        <div class="coord-box" id="coords">Lat: 00.0000, Lng: 00.0000</div>
+        
+        <div class="fab" title="Download KML" onclick="document.getElementById('downloadBtn').click()">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+        </div>
+    </div>
+
+    <!-- Properties Modal -->
+    <div id="propModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Edit Boundary Properties</span>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="kmlName" class="form-input" placeholder="e.g. AOI 1">
+            </div>
+
+            <!-- Stats Badge in Modal -->
+            <div id="modalStats" class="stats-badge hidden">
+                <div class="stat-item">
+                    <div class="stat-label">Area</div>
+                    <div class="stat-value" id="statArea">0 Acres</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Perimeter</div>
+                    <div class="stat-value" id="statPerimeter">0 m</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="mb-0">Description</label>
+                </div>
+                <textarea id="kmlDesc" class="form-input" rows="3" placeholder="Add details about this area..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100 font-medium">Cancel</button>
+                <button onclick="saveProperties()" class="px-4 py-2 rounded bg-cyan-500 text-white hover:bg-cyan-600 font-medium shadow-sm">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
+
     <script>
-        var map = L.map('map', {zoomControl: false}).setView([20.5937, 78.9629], 5);
-        L.control.zoom({position: 'topright'}).addTo(map);
+        // 1. Initialize Map
+        var map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // 2. Layers
         var esriUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-        var esriLayer = L.tileLayer(esriUrl, {attribution: 'Esri', maxZoom: 19});
-        var googleUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
-        var googleLayer = L.tileLayer(googleUrl, {maxZoom: 20, attribution: 'Google'});
-        googleLayer.addTo(map);
-        L.control.layers({'Google': googleLayer, 'Esri': esriLayer}, null, {position: 'topright'}).addTo(map);
-        
-        var markerIcon = L.divIcon({html: '<i class="fa-solid fa-plus" style="color: #e74c3c; font-size: 32px;"></i>', iconSize: [32, 32], iconAnchor: [16, 16]});
+        var esriLayer = L.tileLayer(esriUrl, { attribution: 'Tiles © Esri', maxZoom: 19 });
+
+        var googleHybridUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+        var googleHybridLayer = L.tileLayer(googleHybridUrl, {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: 'Map data &copy; Google'
+        });
+
+        googleHybridLayer.addTo(map);
+        L.control.layers({ "Google Hybrid": googleHybridLayer, "Esri Satellite": esriLayer }, null, { position: 'topright' }).addTo(map);
+
+        // --- Marker Icon (Plus Sign) ---
+        var customMarkerIcon = L.divIcon({
+            className: 'custom-marker-icon',
+            html: '<i class="fa-solid fa-plus" style="color: #e74c3c; font-size: 32px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4)); font-weight: 900;"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16], // Centered
+            popupAnchor: [0, -16]
+        });
+
+        // 3. Drawing Features
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
-        var drawControl = new L.Control.Draw({position: 'topleft', draw: {polyline: false, marker: {icon: markerIcon}, circle: {shapeOptions: {color: '#ff0000', weight: 3, fillOpacity: 0.01}}, polygon: {allowIntersection: false, showArea: true, shapeOptions: {color: '#ff0000', weight: 3, fillOpacity: 0.01}}, rectangle: {shapeOptions: {color: '#ff0000', weight: 3, fillOpacity: 0.01}}}, edit: {featureGroup: drawnItems}});
+
+        var drawControl = new L.Control.Draw({
+            position: 'topleft',
+            draw: {
+                polyline: false, 
+                marker: { icon: customMarkerIcon },
+                circle: {
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01, clickable: true }
+                },
+                circlemarker: false,
+                polygon: {
+                    allowIntersection: false, showArea: true,
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                },
+                rectangle: {
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                }
+            },
+            edit: { featureGroup: drawnItems, remove: true }
+        });
         map.addControl(drawControl);
-        
-        function saveData() { localStorage.setItem('kamalboundaries', JSON.stringify(drawnItems.toGeoJSON())); }
-        function loadData() { var saved = localStorage.getItem('kamalboundaries'); if (saved) { L.geoJSON(JSON.parse(saved), {onEachFeature: function(f, l) { if (f.geometry.type != 'Point') l.setStyle({color: '#ff0000', weight: 3, fillOpacity: 0.01}); drawnItems.addLayer(l); }}); } }
-        function showToast(msg) { var toast = document.getElementById('statusToast'); toast.textContent = msg; toast.style.opacity = 1; setTimeout(() => { toast.style.opacity = 0; }, 3000); }
-        function searchLocation() { var coords = document.getElementById('searchCoords').value.split(','); if (coords.length == 2) { var lat = parseFloat(coords[0]); var lng = parseFloat(coords[1]); if (!isNaN(lat) && !isNaN(lng)) { map.flyTo([lat, lng], 16); showToast('Location found'); } } }
-        function downloadKML() { var features = []; drawnItems.eachLayer(l => { features.push(l.toGeoJSON()); }); if (features.length == 0) { showToast('No boundaries to download'); return; } var fileName = document.getElementById('fileName').value || 'boundaries'; var kml = tokml({type: 'FeatureCollection', features}); var blob = new Blob([kml], {type: 'application/vnd.google-earth.kml+xml'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName + '.kml'; a.click(); showToast('Downloaded ' + fileName + '.kml'); }
-        function uploadKML(input) { if (!input.files[0]) return; var reader = new FileReader(); reader.onload = (e) => { try { var kml = new DOMParser().parseFromString(e.target.result, 'text/xml'); var placemarks = kml.getElementsByTagName('Placemark'); for (let pm of placemarks) { var name = pm.getElementsByTagName('name')[0]?.textContent || 'Imported'; var coords = pm.getElementsByTagName('coordinates')[0]?.textContent.trim(); if (coords) { var latLng = coords.split('\n')[0].split(','); L.marker([parseFloat(latLng[1]), parseFloat(latLng[0])], {icon: markerIcon}).addTo(drawnItems).feature = {type: 'Feature', properties: {name}}; } } saveData(); showToast('KML Imported'); } catch (err) { showToast('Error importing KML'); } }; reader.readAsText(input.files[0]); input.value = ''; }
-        function clearAll() { if (confirm('Clear all boundaries?')) { drawnItems.clearLayers(); saveData(); showToast('All cleared'); } }
-        
-        map.on('mousemove', (e) => { document.getElementById('coords').innerHTML = 'Lat: ' + e.latlng.lat.toFixed(4) + ', Lng: ' + e.latlng.lng.toFixed(4); });
-        map.on(L.Draw.Event.CREATED, (e) => { var layer = e.layer; layer.feature = {type: 'Feature', properties: {name: 'Boundary'}}; drawnItems.addLayer(layer); saveData(); showToast('Added'); });
-        map.on(L.Draw.Event.DELETED, () => { saveData(); showToast('Deleted'); });
-        map.on(L.Draw.Event.EDITED, () => { saveData(); showToast('Updated'); });
-        
+
+
+        // 4. State Management
+        var currentLayer = null;
+        var layerCounter = 1;
+        var isEditMode = false; // Track edit mode state
+
+        // --- AUTO-SAVE LOGIC ---
+        function saveData() {
+            var data = drawnItems.toGeoJSON();
+            localStorage.setItem('kamal_boundaries', JSON.stringify(data));
+            localStorage.setItem('kamal_counter', layerCounter);
+        }
+
+        function loadData() {
+            var savedData = localStorage.getItem('kamal_boundaries');
+            var savedCounter = localStorage.getItem('kamal_counter');
+            
+            if (savedCounter) layerCounter = parseInt(savedCounter);
+
+            if (savedData) {
+                var geojson = JSON.parse(savedData);
+                L.geoJSON(geojson, {
+                    onEachFeature: function(feature, layer) {
+                        layer.feature = layer.feature || feature;
+                        
+                        if (feature.geometry.type !== 'Point') {
+                            if(layer.setStyle) layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                        } else {
+                            layer.setIcon(customMarkerIcon);
+                        }
+
+                        layer.on('click', function() { openModal(layer); });
+                        
+                        var tooltipOffset = (feature.geometry.type === 'Point') ? [0, -16] : [0, 0];
+                        if(feature.properties && feature.properties.name) {
+                            layer.bindTooltip(feature.properties.name, { direction: 'top', offset: tooltipOffset });
+                        }
+
+                        drawnItems.addLayer(layer);
+                    }
+                });
+                updateSidePanel();
+            }
+        }
+
+        // --- Toggle Edit Mode ---
+        function toggleEditMode() {
+            var btn = document.getElementById('editModeBtn');
+            isEditMode = !isEditMode;
+
+            if (isEditMode) {
+                // Enable Editing
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Adjustments';
+                btn.className = "action-btn btn-warning"; 
+                
+                drawnItems.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        if(layer.dragging) layer.dragging.enable();
+                    } else {
+                        if(layer.editing) layer.editing.enable();
+                    }
+                });
+                showToast("✏️ Edit Mode: Drag points to adjust");
+            } else {
+                // Disable Editing (Save)
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries';
+                btn.className = "action-btn btn-outline";
+                
+                drawnItems.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        if(layer.dragging) layer.dragging.disable();
+                    } else {
+                        if(layer.editing) layer.editing.disable();
+                    }
+                });
+                
+                saveData();
+                updateSidePanel(); // Recalculate stats
+                showToast("✅ Adjustments Saved");
+            }
+        }
+
+        // Helper functions
+        function createCirclePolygon(circle) {
+            var center = circle.getLatLng();
+            var radius = circle.getRadius();
+            var points = [];
+            for (var i = 0; i < 360; i += 6) { 
+                var radian = i * (Math.PI / 180);
+                var latOffset = (radius * Math.cos(radian)) / 111111;
+                var lngOffset = (radius * Math.sin(radian)) / (111111 * Math.cos(center.lat * (Math.PI / 180)));
+                points.push([center.lat + latOffset, center.lng + lngOffset]);
+            }
+            return L.polygon(points, circle.options);
+        }
+
+        function calculateStats(layer) {
+            try {
+                if(layer instanceof L.Marker) return { area: 0, perimeter: 0, isPoint: true };
+                var geojson = layer.toGeoJSON();
+                var areaSqMeters = turf.area(geojson);
+                var lengthKm = turf.length(geojson, {units: 'kilometers'});
+                var areaAcres = (areaSqMeters * 0.000247105).toFixed(2);
+                var areaHectares = (areaSqMeters / 10000).toFixed(2);
+                var perimeterMeters = (lengthKm * 1000).toFixed(2);
+                return { areaAcres: areaAcres, areaHectares: areaHectares, perimeterMeters: perimeterMeters, isPoint: false };
+            } catch(e) {
+                return { areaAcres: 0, perimeterMeters: 0, isPoint: true };
+            }
+        }
+
+        function updateSidePanel() {
+            var listContainer = document.getElementById('boundaryList');
+            var countSpan = document.getElementById('fieldCount');
+            listContainer.innerHTML = '';
+            var layers = drawnItems.getLayers();
+            countSpan.textContent = layers.length;
+
+            if(layers.length === 0) {
+                listContainer.innerHTML = '<div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>';
+                return;
+            }
+
+            layers.forEach(function(layer) {
+                var props = layer.feature.properties;
+                var layerId = L.stamp(layer);
+                var stats = calculateStats(layer);
+                var statsHtml = !stats.isPoint ? 
+                    `<div class="boundary-stats">Area: ${stats.areaAcres} ac | Perim: ${stats.perimeterMeters} m</div>` : 
+                    `<div class="boundary-stats">Location Marker</div>`;
+
+                var div = document.createElement('div');
+                div.className = 'boundary-item';
+                div.innerHTML = `
+                    <div class="boundary-info" onclick="zoomToLayer(${layerId})">
+                        <div class="boundary-name">${props.name}</div>
+                        <div class="boundary-meta">${props.description ? props.description.substring(0, 15) + '...' : ''}</div>
+                        ${statsHtml}
+                    </div>
+                    <div class="boundary-actions">
+                        <button class="icon-btn" onclick="openModalById(${layerId})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="icon-btn delete" onclick="deleteLayerById(${layerId})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                div.addEventListener('mouseenter', function() { layer.setStyle({ weight: 5, color: '#00d2d3' }); });
+                div.addEventListener('mouseleave', function() { layer.setStyle({ weight: 3, color: '#ff0000' }); });
+                listContainer.appendChild(div);
+            });
+        }
+
+        // KML Upload
+        function handleFileUpload(input) {
+            if(isEditMode) toggleEditMode(); // Force exit edit mode
+            var file = input.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var kmlText = e.target.result;
+                    var parser = new DOMParser();
+                    var kmlDom = parser.parseFromString(kmlText, 'text/xml');
+                    var geojson = toGeoJSON.kml(kmlDom);
+
+                    if (geojson.features.length === 0) { showToast("⚠️ No valid features"); return; }
+
+                    L.geoJSON(geojson, {
+                        onEachFeature: function(feature, layer) {
+                            layer.feature = layer.feature || {};
+                            layer.feature.type = "Feature";
+                            layer.feature.properties = feature.properties || {};
+                            
+                            if (!layer.feature.properties.name) layer.feature.properties.name = "Imported " + layerCounter++;
+                            if (!layer.feature.properties.description) layer.feature.properties.description = "Imported from KML";
+
+                            if (layer.setStyle) layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                            
+                            layer.on('click', function() { openModal(layer); });
+                            var tooltipOffset = (feature.geometry.type === 'Point') ? [0, -16] : [0, 0];
+                            layer.bindTooltip(layer.feature.properties.name, { direction: 'top', offset: tooltipOffset });
+                            drawnItems.addLayer(layer);
+                        }
+                    });
+
+                    if (drawnItems.getBounds().isValid()) map.fitBounds(drawnItems.getBounds());
+                    updateSidePanel();
+                    saveData(); 
+                    showToast("✅ KML Imported");
+                } catch (error) { console.error(error); showToast("❌ Error parsing KML"); }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        window.zoomToLayer = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) {
+                if(layer.getBounds) map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                else if(layer.getLatLng) { map.flyTo(layer.getLatLng(), 16); layer.openPopup(); }
+            }
+        };
+
+        window.openModalById = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) openModal(layer);
+        };
+
+        window.deleteLayerById = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) {
+                drawnItems.removeLayer(layer);
+                updateSidePanel();
+                saveData();
+                showToast("Boundary removed");
+            }
+        };
+
+        // UI Logic
+        function openModal(layer) {
+            // Prevent modal if dragging points in edit mode
+            if(isEditMode) return; 
+
+            currentLayer = layer;
+            var props = currentLayer.feature.properties;
+            document.getElementById('kmlName').value = props.name || "";
+            document.getElementById('kmlDesc').value = props.description || "";
+            
+            var stats = calculateStats(layer);
+            var statsDiv = document.getElementById('modalStats');
+            if(stats.isPoint) {
+                statsDiv.classList.add('hidden');
+            } else {
+                statsDiv.classList.remove('hidden');
+                document.getElementById('statArea').textContent = stats.areaAcres + " Acres";
+                document.getElementById('statPerimeter').textContent = stats.perimeterMeters + " m";
+            }
+            document.getElementById('propModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('propModal').style.display = 'none';
+            currentLayer = null;
+        }
+
+        function saveProperties() {
+            if (currentLayer) {
+                var name = document.getElementById('kmlName').value;
+                var desc = document.getElementById('kmlDesc').value;
+                currentLayer.feature.properties.name = name;
+                currentLayer.feature.properties.description = desc;
+                
+                var isMarker = currentLayer instanceof L.Marker;
+                var offset = isMarker ? [0, -16] : [0, 0];
+                currentLayer.bindTooltip(name, { direction: 'top', offset: offset }).openTooltip();
+                
+                updateSidePanel(); 
+                saveData(); 
+                showToast("Properties Saved");
+                closeModal();
+            }
+        }
+
+        map.on('mousemove', function(e) {
+            document.getElementById('coords').innerHTML = "Lat: " + e.latlng.lat.toFixed(4) + ", Lng: " + e.latlng.lng.toFixed(4);
+        });
+
+        function showToast(message) {
+            var toast = document.getElementById('statusToast');
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const inputVal = document.getElementById('searchCoords').value.trim();
+            const parts = inputVal.split(/[\s,]+/);
+            if (parts.length < 2) { showToast("❌ Format: Lat, Lng"); return; }
+            const lat = parseFloat(parts[0]);
+            const lng = parseFloat(parts[1]);
+            
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90) { showToast("❌ Invalid coordinates"); return; }
+
+            map.flyTo([lat, lng], 16, { duration: 1.5 });
+            L.marker([lat, lng], { icon: customMarkerIcon }).addTo(map)
+                .bindPopup(`<b>Search Result</b><br>Lat: ${lat}<br>Lng: ${lng}`)
+                .openPopup();
+            showToast("📍 Moved to location");
+        });
+
+        // Draw Events
+        map.on(L.Draw.Event.CREATED, function (e) {
+            var layer = e.layer;
+            var type = e.layerType;
+
+            if (type === 'circle') {
+                layer = createCirclePolygon(layer);
+                type = 'polygon';
+            }
+
+            layer.feature = layer.feature || {};
+            layer.feature.type = "Feature";
+            var typeName = (type === 'marker') ? "Point " : "Field ";
+            layer.feature.properties = {
+                name: typeName + layerCounter,
+                description: "Created on " + new Date().toLocaleDateString()
+            };
+            layerCounter++;
+
+            layer.on('click', function() { openModal(layer); });
+            var tooltipOffset = (type === 'marker') ? [0, -16] : [0, 0];
+            layer.bindTooltip(layer.feature.properties.name, { direction: 'top', offset: tooltipOffset });
+
+            drawnItems.addLayer(layer);
+            updateSidePanel(); 
+            saveData(); 
+            showToast("Added to list!");
+        });
+
+        map.on(L.Draw.Event.DELETED, function (e) {
+            updateSidePanel();
+            saveData();
+            showToast("Boundary removed");
+        });
+
+        map.on(L.Draw.Event.EDITED, function (e) {
+            updateSidePanel();
+            saveData();
+            showToast("Changes Saved");
+        });
+
+        // Download Logic
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if(isEditMode) toggleEditMode(); // Force save before download
+            
+            var features = [];
+            drawnItems.eachLayer(function(layer) {
+                var geojson = layer.toGeoJSON();
+                if (layer.feature && layer.feature.properties) {
+                    geojson.properties = JSON.parse(JSON.stringify(layer.feature.properties));
+                }
+                
+                if (geojson.geometry.type === 'Polygon' || geojson.geometry.type === 'MultiPolygon') {
+                    geojson.properties['stroke'] = '#ff0000';
+                    geojson.properties['stroke-width'] = 2;
+                    geojson.properties['stroke-opacity'] = 1;
+                    geojson.properties['fill'] = '#ffffff';
+                    geojson.properties['fill-opacity'] = 0;
+                }
+                features.push(geojson);
+            });
+
+            if (features.length === 0) { showToast("⚠️ List is empty"); return; }
+
+            var fileNameInput = document.getElementById('kmlFileName').value.trim();
+            var fileName = fileNameInput || "My_Boundaries"; 
+            fileName = fileName.replace(/[^a-z0-9_\-]/gi, '_');
+
+            var data = { "type": "FeatureCollection", "features": features };
+            var kml = tokml(data, { simplestyle: true, name: 'name', description: 'description' });
+
+            var blob = new Blob([kml], {type: "application/vnd.google-earth.kml+xml"});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = fileName + ".kml";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showToast("✅ Downloaded " + fileName + ".kml");
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            if(Object.keys(drawnItems._layers).length === 0) return;
+            if(confirm("Clear all boundaries? This cannot be undone.")) {
+                drawnItems.clearLayers();
+                layerCounter = 1;
+                localStorage.removeItem('kamal_boundaries');
+                localStorage.removeItem('kamal_counter');
+                updateSidePanel();
+                showToast("All cleared");
+            }
+        });
+
         loadData();
     </script>
 </body>
