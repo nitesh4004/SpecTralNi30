@@ -296,7 +296,7 @@ a:hover {
 .about-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 10px;
 }
 
 .stat-box {
@@ -335,13 +335,13 @@ a:hover {
 .apps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 10px;
   margin-top: 50px;
 }
 
 .app-card {
   background: var(--white);
-  padding: 30px;
+  padding: 12px;
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
@@ -512,7 +512,7 @@ a:hover {
 }
 
 .project-info {
-  padding: 30px;
+  padding: 12px;
 }
 
 .project-info h3 {
@@ -925,7 +925,7 @@ a:hover {
   .services-grid,
   .projects-grid,
   .tech-grid {
-    gap: 20px;
+    gap: 10px;
   }
   
   .service-card,
@@ -1002,7 +1002,7 @@ body {
 /* Premium app card styling with advanced hover effects */
 .app-card {
   background: var(--white);
-  padding: 30px;
+  padding: 12px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(30, 60, 114, 0.08);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1042,7 +1042,7 @@ body {
 .app-header {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   margin-bottom: 24px;
   padding-bottom: 20px;
   border-bottom: 2px solid #f0f0f0;
@@ -1147,7 +1147,7 @@ body {
 .apps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 10px;
   margin-top: 50px;
 }
 
