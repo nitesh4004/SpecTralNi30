@@ -278,6 +278,7 @@ section {
   grid-template-columns: repeat(3, 1fr) !important;
   gap: 2rem;
   max-width: 1400px;
+     width: 100% !important;
   margin: 0 auto;
 }
 
