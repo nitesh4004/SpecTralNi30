@@ -289,6 +289,18 @@
             pointer-events: none;
         }
 
+        /* CUSTOM EDIT HANDLES (DOTS) */
+        .leaflet-editing-icon {
+            border-radius: 50% !important; /* Make it a circle */
+            background-color: #00d2d3 !important; /* Cyan Theme Color */
+            border: 2px solid white !important; /* White Border */
+            width: 12px !important;
+            height: 12px !important;
+            margin-left: -6px !important; /* Center the dot */
+            margin-top: -6px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -396,7 +408,7 @@
         <div class="action-section">
             <div class="action-header">Tools</div>
             
-            <!-- NEW: Toggle Edit Mode Button -->
+            <!-- Toggle Edit Mode Button -->
             <button id="editModeBtn" class="action-btn btn-outline mb-3" onclick="toggleEditMode()">
                 <i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries
             </button>
