@@ -3,257 +3,952 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpecTralNi30 - Geospatial Data Science</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>KaMaL - KML Boundary Maker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Turf.js for Area & Perimeter Calculations -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- toGeoJSON for KML Import -->
+    <script src="https://unpkg.com/@mapbox/togeojson/togeojson.js"></script>
+
+    <style>
+        /* General Reset & Layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 340px;
+            background-color: #1a252f;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 2000;
+            overflow-y: hidden;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #00d2d3;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .action-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #34495e;
+            flex-shrink: 0;
+        }
+
+        .action-header {
+            font-size: 11px;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* Input & Buttons */
+        .sidebar-input {
+            background-color: #2c3e50;
+            border: 1px solid #34495e;
+            color: #ecf0f1;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .sidebar-input:focus {
+            outline: none;
+            border-color: #00d2d3;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-primary { background-color: #00d2d3; color: #1a252f; }
+        .btn-primary:hover { background-color: #00b5b6; }
+        .btn-secondary { background-color: #e74c3c; color: white; }
+        .btn-secondary:hover { background-color: #c0392b; }
+        .btn-dark { background-color: #34495e; border: 1px solid #2c3e50; color: #ecf0f1; }
+        .btn-dark:hover { background-color: #2c3e50; }
+        .btn-outline { background: transparent; border: 1px dashed #7f8c8d; color: #bdc3c7; }
+        .btn-outline:hover { border-color: #ecf0f1; color: #ecf0f1; background: rgba(255,255,255,0.05); }
+        .btn-success { background-color: #27ae60; color: white; }
+        .btn-success:hover { background-color: #2ecc71; }
+
+        /* Boundary List Area */
+        .boundary-list-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 5px;
+        }
+        
+        .boundary-list-container::-webkit-scrollbar { width: 6px; }
+        .boundary-list-container::-webkit-scrollbar-track { background: #1a252f; }
+        .boundary-list-container::-webkit-scrollbar-thumb { background: #34495e; border-radius: 3px; }
+
+        .boundary-item {
+            background: #2c3e50;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #00d2d3;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: background 0.2s;
+        }
+        .boundary-item:hover {
+            background: #34495e;
+        }
+        .boundary-info {
+            flex: 1;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .boundary-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #ecf0f1;
+        }
+        .boundary-meta {
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 2px;
+        }
+        .boundary-stats {
+            font-size: 10px;
+            color: #f1c40f; /* Yellow for stats */
+            margin-top: 2px;
+            font-family: monospace;
+        }
+        .boundary-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 8px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .icon-btn.delete:hover { color: #e74c3c; }
+
+        .user-profile {
+            padding-top: 15px;
+            border-top: 1px solid #34495e;
+            font-size: 12px;
+            color: #7f8c8d;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .top-bar {
+            height: 60px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .status-indicator {
+            font-size: 14px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .coord-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-family: monospace;
+            color: #2c3e50;
+            pointer-events: none;
+        }
+        
+        .fab {
+            position: absolute;
+            bottom: 30px;
+            left: 30px; 
+            background-color: #00d2d3;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        .fab:hover { transform: scale(1.1); }
+
+        .leaflet-draw-toolbar a {
+            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png');
+            background-repeat: no-repeat;
+        }
+        .leaflet-retina .leaflet-draw-toolbar a {
+            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png');
+        }
+
+        #statusToast {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 37, 47, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 2000;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a252f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #00d2d3;
+            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.1);
+        }
+
+        .stats-badge {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #d97706; font-weight: bold; }
+        .stat-value { font-weight: bold; font-size: 14px; }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <i class="fas fa-satellite"></i>
-                <span>SpecTralNi30</span>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="#home" class="nav-link">Home</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#services" class="nav-link">Services</a></li>
-                <li><a href="#projects" class="nav-link">Projects</a></li>
-                <li><a href="tech-notes.html" class="nav-link">Tech Notes</a></li>
-                <li><a href="apps.html" class="nav-link">Apps</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">SpecTralNi30</h1>
-            <p class="hero-subtitle">Advanced Geospatial Data Science & Remote Sensing Solutions</p>
-            <p class="hero-description">Transforming satellite imagery into actionable insights through cutting-edge machine learning and geospatial analysis</p>
-            <a href="#services" class="cta-button">Explore Services</a>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-satellite"></i> KaMaL
         </div>
-        <div class="hero-background"></div>
-    </section>
+        
+        <div class="action-section">
+            <div class="action-header">Navigation</div>
+            
+            <div class="mb-2">
+                <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
+            </div>
+            <button id="searchBtn" class="action-btn btn-dark">
+                <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Go to Coords
+            </button>
+        </div>
 
-    <!-- About Section -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">About SpecTralNi30</h2>
-            <div class="about-content">
-                <div class="about-text">
-                    <p>SpecTralNi30 is a specialized geospatial data science initiative focused on leveraging satellite imagery and remote sensing technologies to solve real-world challenges in agriculture, disaster management, and environmental monitoring.</p>
-                    <h3>Our expertise spans across multiple domains:</h3>
-                    <ul class="expertise-list">
-                        <li><strong>Remote Sensing:</strong> Sentinel-1 & Sentinel-2 satellite data processing</li>
-                        <li><strong>Machine Learning:</strong> Deep learning models for geospatial classification</li>
-                        <li><strong>Agricultural Monitoring:</strong> Crop yield prediction and land cover analysis</li>
-                        <li><strong>Flood Mapping:</strong> Inundation analysis and disaster mapping</li>
-                        <li><strong>GIS Analysis:</strong> Advanced spatial analysis using QGIS and ArcGIS</li>
-                        <li><strong>Data Processing:</strong> Cloud-based geospatial data processing with Python</li>
-                    </ul>
-                </div>
-                <div class="about-stats">
-                    <div class="stat-box">
-                        <h3>100+</h3>
-                        <p>Satellite Images Processed</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3>90%</h3>
-                        <p>Model Accuracy</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3>2+</h3>
-                        <p>Years Experience</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3>50+</h3>
-                        <p>Projects Completed</p>
-                    </div>
-                </div>
+        <div class="action-section">
+            <div class="action-header">Tools</div>
+            <!-- Filename Input -->
+            <div class="mb-2">
+                <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input">
+            </div>
+            <button id="downloadBtn" class="action-btn btn-primary">
+                <i class="fa-solid fa-download"></i> Download All KML
+            </button>
+            
+            <!-- Upload KML Input (Hidden) -->
+            <input type="file" id="kmlFileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(this)">
+            
+            <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline">
+                <i class="fa-solid fa-upload"></i> Upload KML
+            </button>
+            
+            <button id="clearBtn" class="action-btn btn-secondary">
+                <i class="fa-solid fa-trash"></i> Clear All
+            </button>
+        </div>
+
+        <div class="action-header flex justify-between items-center">
+            <span>Saved Fields</span>
+            <span id="fieldCount" class="bg-gray-700 text-xs px-2 py-0.5 rounded text-gray-300">0</span>
+        </div>
+        <div class="boundary-list-container" id="boundaryList">
+            <div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>
+        </div>
+
+        <div class="user-profile">
+            Logged in as: Nitesh Kumar<br>
+            <span style="color: #27ae60;"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Online</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h3 class="text-lg font-semibold text-gray-700">Geospatial Dashboard</h3>
+            <div class="flex items-center gap-3">
+                 <span class="status-indicator"><i class="fa-solid fa-check-circle"></i> System Ready</span>
             </div>
         </div>
-    </section>
+        
+        <div id="statusToast">Action Completed</div>
 
-    <!-- Interactive Apps Section -->
-    <section id="apps-section" class="services apps-section">
-        <div class="container">
-            <h2 class="section-title">Interactive Apps & Tools</h2>
-            <div class="apps-grid">
-                <div class="app-card">
-                    <div class="app-header">
-                        <i class="fas fa-map"></i>
-                        <h3>SpecTralNi30</h3>
-                    </div>
-                    <p>Advanced geospatial analysis platform for satellite imagery processing, vegetation monitoring, and LULC classification.</p>
-                    <div class="app-buttons">
-                        <a href="https://spectralni30.streamlit.app/" class="btn btn-primary" target="_blank">Launch App</a>
-                        <a href="tech-notes.html" class="btn btn-secondary">Learn More</a>
-                    </div>
+        <div id="map"></div>
+        
+        <div class="coord-box" id="coords">Lat: 00.0000, Lng: 00.0000</div>
+        
+        <div class="fab" title="Download KML" onclick="document.getElementById('downloadBtn').click()">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+        </div>
+    </div>
+
+    <!-- Properties Modal -->
+    <div id="propModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Edit Boundary Properties</span>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="kmlName" class="form-input" placeholder="e.g. AOI 1">
+            </div>
+
+            <!-- Stats Badge in Modal -->
+            <div id="modalStats" class="stats-badge hidden">
+                <div class="stat-item">
+                    <div class="stat-label">Area</div>
+                    <div class="stat-value" id="statArea">0 Acres</div>
                 </div>
-                <div class="app-card">
-                    <div class="app-header">
-                        <i class="fas fa-exchange-alt"></i>
-                        <h3>GeoFormatX</h3>
-                    </div>
-                    <p>Universal geospatial data format converter with support for GeoJSON, Shapefile, GeoTIFF, NetCDF, and more.</p>
-                    <div class="app-buttons">
-                        <a href="https://geoformatx.streamlit.app/" class="btn btn-primary" target="_blank">Launch App</a>
-                        <a href="tech-notes.html" class="btn btn-secondary">Learn More</a>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-label">Perimeter</div>
+                    <div class="stat-value" id="statPerimeter">0 m</div>
                 </div>
             </div>
-                            <div class="app-card">
-                    <div class="app-header">
-                        <i class="fas fa-map"></i>
-                        <h3>KaMaL</h3>
-                    </div>
-                    <p>KML Boundary Maker - Create and manage geospatial boundaries with interactive mapping. Draw polygons, circles, and markers on satellite imagery. Export to KML format for GIS analysis.</p>
-                    <div class="app-buttons">
-                        <a href="kamal.html" class="btn btn-primary" target="_blank">Launch App</a>
-                        <a href="#" class="btn btn-secondary">Learn More</a>
-                    </div>
-                </div>
-        </div>
-    </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services">
-        <div class="container">
-            <h2 class="section-title">Our Services</h2>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-leaf"></i></div>
-                    <h3>Agricultural Monitoring</h3>
-                    <p>Crop yield forecasting, vegetation index analysis, and field-level crop monitoring using multispectral satellite data.</p>
+            <div class="form-group">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="mb-0">Description</label>
                 </div>
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-water"></i></div>
-                    <h3>Flood Mapping</h3>
-                    <p>Rapid inundation mapping, flood depth estimation, and disaster assessment using SAR and optical imagery.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-layer-group"></i></div>
-                    <h3>Land Use Classification</h3>
-                    <p>Automated LULC mapping, urban sprawl analysis, and environmental change detection using machine learning.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-brain"></i></div>
-                    <h3>ML Model Development</h3>
-                    <p>Custom deep learning models for image classification, object detection, and predictive analytics.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-database"></i></div>
-                    <h3>Data Processing</h3>
-                    <p>Cloud-based geospatial data processing, preprocessing pipelines, and database management solutions.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-chart-line"></i></div>
-                    <h3>Spatial Analytics</h3>
-                    <p>Advanced GIS analysis, geospatial statistics, and custom cartography for decision-making.</p>
-                </div>
+                <textarea id="kmlDesc" class="form-input" rows="3" placeholder="Add details about this area..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100 font-medium">Cancel</button>
+                <button onclick="saveProperties()" class="px-4 py-2 rounded bg-cyan-500 text-white hover:bg-cyan-600 font-medium shadow-sm">Save Changes</button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Technology Stack Section -->
-    <section class="technologies">
-        <div class="container">
-            <h2 class="section-title">Technology Stack</h2>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <h4><i class="fas fa-tools"></i> Geospatial Tools</h4>
-                    <p>QGIS, ArcGIS, Google Earth Engine, Sentinel Hub</p>
-                </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-code"></i> Programming</h4>
-                    <p>Python, JavaScript (GEE), SQL, GDAL/OGR</p>
-                </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-cube"></i> Libraries</h4>
-                    <p>Rasterio, GeoPandas, Scikit-learn, TensorFlow</p>
-                </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-satellite"></i> Satellite Data</h4>
-                    <p>Sentinel-1, Sentinel-2, Landsat, MODIS</p>
-                </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-cloud"></i> Cloud Platforms</h4>
-                    <p>Google Cloud, AWS, Azure, Google Earth Engine</p>
-                </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-chart-pie"></i> Visualization</h4>
-                    <p>Folium, Leaflet, Matplotlib, Plotly</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
 
-    <!-- Contact Section -->
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2 class="section-title">Get In Touch</h2>
-            <div class="contact-content">
-                <div class="contact-form">
-                    <h3>Let's Connect</h3>
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <input type="text" placeholder="Your Name" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" placeholder="Your Email" required>
-                        </div>
-                        <div class="form-group">
-                            <textarea placeholder="Your Message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="submit-btn">Send Message</button>
-                    </form>
-                </div>
-                <div class="contact-info">
-                    <h3>Contact Information</h3>
-                    <p>Interested in geospatial solutions? Let's discuss how we can leverage satellite data for your project.</p>
-                    <div class="contact-details">
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <strong>Email:</strong>
-                                <p>nitesh.kumar@swan.co.in</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <strong>Location:</strong>
-                                <p>India</p>
-                            </div>
-                        </div>
+    <script>
+        // 1. Initialize Map
+        var map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // 2. Layers
+        var esriUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+        var esriLayer = L.tileLayer(esriUrl, { attribution: 'Tiles © Esri', maxZoom: 19 });
+
+        var googleHybridUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+        var googleHybridLayer = L.tileLayer(googleHybridUrl, {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: 'Map data &copy; Google'
+        });
+
+        googleHybridLayer.addTo(map);
+        L.control.layers({ "Google Hybrid": googleHybridLayer, "Esri Satellite": esriLayer }, null, { position: 'topright' }).addTo(map);
+
+        // --- Marker Icon (Plus Sign) ---
+        var customMarkerIcon = L.divIcon({
+            className: 'custom-marker-icon',
+            html: '<i class="fa-solid fa-plus" style="color: #e74c3c; font-size: 32px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4)); font-weight: 900;"></i>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16], // Centered for a plus sign
+            popupAnchor: [0, -16] // Popup above the center
+        });
+
+        // 3. Drawing Features
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            position: 'topleft',
+            draw: {
+                polyline: false, 
+                marker: { icon: customMarkerIcon },
+                circle: {
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01, clickable: true }
+                },
+                circlemarker: false,
+                polygon: {
+                    allowIntersection: false, showArea: true,
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                },
+                rectangle: {
+                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                }
+            },
+            edit: { featureGroup: drawnItems, remove: true }
+        });
+        map.addControl(drawControl);
+
+
+        // 4. State Management
+        var currentLayer = null;
+        var layerCounter = 1;
+
+        // --- AUTO-SAVE LOGIC ---
+        function saveData() {
+            var data = drawnItems.toGeoJSON();
+            localStorage.setItem('kamal_boundaries', JSON.stringify(data));
+            localStorage.setItem('kamal_counter', layerCounter);
+        }
+
+        function loadData() {
+            var savedData = localStorage.getItem('kamal_boundaries');
+            var savedCounter = localStorage.getItem('kamal_counter');
+            
+            if (savedCounter) layerCounter = parseInt(savedCounter);
+
+            if (savedData) {
+                var geojson = JSON.parse(savedData);
+                L.geoJSON(geojson, {
+                    onEachFeature: function(feature, layer) {
+                        layer.feature = layer.feature || feature;
+                        
+                        // Restore styles based on geometry type
+                        if (feature.geometry.type !== 'Point') {
+                            if(layer.setStyle) layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                        } else {
+                            layer.setIcon(customMarkerIcon); // Restore custom icon for points
+                        }
+
+                        // Restore events & tooltips
+                        layer.on('click', function() { openModal(layer); });
+                        
+                        var tooltipOffset = (feature.geometry.type === 'Point') ? [0, -16] : [0, 0];
+                        if(feature.properties && feature.properties.name) {
+                            layer.bindTooltip(feature.properties.name, { direction: 'top', offset: tooltipOffset });
+                        }
+
+                        drawnItems.addLayer(layer);
+                    }
+                });
+                updateSidePanel();
+            }
+        }
+
+        // Helper: Convert Circle to Polygon (60 points) for KML compatibility
+        function createCirclePolygon(circle) {
+            var center = circle.getLatLng();
+            var radius = circle.getRadius();
+            var points = [];
+            for (var i = 0; i < 360; i += 6) { 
+                var radian = i * (Math.PI / 180);
+                var latOffset = (radius * Math.cos(radian)) / 111111;
+                var lngOffset = (radius * Math.sin(radian)) / (111111 * Math.cos(center.lat * (Math.PI / 180)));
+                points.push([center.lat + latOffset, center.lng + lngOffset]);
+            }
+            return L.polygon(points, circle.options);
+        }
+
+        // Helper: Calculate Stats using Turf.js
+        function calculateStats(layer) {
+            try {
+                if(layer instanceof L.Marker) return { area: 0, perimeter: 0, isPoint: true };
+                
+                var geojson = layer.toGeoJSON();
+                var areaSqMeters = turf.area(geojson);
+                var lengthKm = turf.length(geojson, {units: 'kilometers'});
+                
+                // Conversions
+                var areaAcres = (areaSqMeters * 0.000247105).toFixed(2);
+                var areaHectares = (areaSqMeters / 10000).toFixed(2);
+                var perimeterMeters = (lengthKm * 1000).toFixed(2);
+                
+                return {
+                    areaAcres: areaAcres,
+                    areaHectares: areaHectares,
+                    perimeterMeters: perimeterMeters,
+                    isPoint: false
+                };
+            } catch(e) {
+                return { areaAcres: 0, perimeterMeters: 0, isPoint: true };
+            }
+        }
+
+        // 5. Sidebar List Logic
+        function updateSidePanel() {
+            var listContainer = document.getElementById('boundaryList');
+            var countSpan = document.getElementById('fieldCount');
+            listContainer.innerHTML = '';
+            
+            var layers = drawnItems.getLayers();
+            countSpan.textContent = layers.length;
+
+            if(layers.length === 0) {
+                listContainer.innerHTML = '<div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>';
+                return;
+            }
+
+            layers.forEach(function(layer) {
+                var props = layer.feature.properties;
+                var layerId = L.stamp(layer);
+                var stats = calculateStats(layer);
+                
+                var statsHtml = '';
+                if(!stats.isPoint) {
+                    statsHtml = `<div class="boundary-stats">Area: ${stats.areaAcres} ac | Perim: ${stats.perimeterMeters} m</div>`;
+                } else {
+                    statsHtml = `<div class="boundary-stats">Location Marker</div>`;
+                }
+
+                var div = document.createElement('div');
+                div.className = 'boundary-item';
+                div.innerHTML = `
+                    <div class="boundary-info" onclick="zoomToLayer(${layerId})">
+                        <div class="boundary-name">${props.name}</div>
+                        <div class="boundary-meta">${props.description ? props.description.substring(0, 15) + '...' : ''}</div>
+                        ${statsHtml}
                     </div>
-                    <div class="social-links">
-                        <a href="https://nitesh4004.github.io/" target="_blank" title="Portfolio"><i class="fas fa-globe"></i></a>
-                        <a href="https://github.com/nitesh4004" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
-                        <a href="https://linkedin.com/in/nitesh-kumar-b07/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                        <a href="https://twitter.com/" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <div class="boundary-actions">
+                        <button class="icon-btn" onclick="openModalById(${layerId})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="icon-btn delete" onclick="deleteLayerById(${layerId})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
+                `;
+                div.addEventListener('mouseenter', function() { layer.setStyle({ weight: 5, color: '#00d2d3' }); });
+                div.addEventListener('mouseleave', function() { layer.setStyle({ weight: 3, color: '#ff0000' }); });
+                listContainer.appendChild(div);
+            });
+        }
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 SpecTralNi30 - Geospatial Data Science. All rights reserved.</p>
-            <p class="footer-tagline">Transforming satellite imagery into insights</p>
-        </div>
-    </footer>
+        // KML Upload Handler
+        function handleFileUpload(input) {
+            var file = input.files[0];
+            if (!file) return;
 
-    <script src="script.js"></script>
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var kmlText = e.target.result;
+                    var parser = new DOMParser();
+                    var kmlDom = parser.parseFromString(kmlText, 'text/xml');
+                    var geojson = toGeoJSON.kml(kmlDom);
+
+                    if (geojson.features.length === 0) {
+                        showToast("⚠️ No valid features found in KML");
+                        return;
+                    }
+
+                    L.geoJSON(geojson, {
+                        onEachFeature: function(feature, layer) {
+                            layer.feature = layer.feature || {};
+                            layer.feature.type = "Feature";
+                            layer.feature.properties = feature.properties || {};
+                            
+                            if (!layer.feature.properties.name) {
+                                layer.feature.properties.name = "Imported " + layerCounter++;
+                            }
+                            if (!layer.feature.properties.description) {
+                                layer.feature.properties.description = "Imported from KML";
+                            }
+
+                            if (layer.setStyle) {
+                                layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                            }
+                            
+                            layer.on('click', function() { openModal(layer); });
+                            
+                            var tooltipOffset = [0, 0];
+                            if (feature.geometry.type === 'Point') {
+                                tooltipOffset = [0, -16]; 
+                            }
+                            
+                            layer.bindTooltip(layer.feature.properties.name, { direction: 'top', offset: tooltipOffset });
+                            drawnItems.addLayer(layer);
+                        }
+                    });
+
+                    if (drawnItems.getBounds().isValid()) {
+                        map.fitBounds(drawnItems.getBounds());
+                    }
+                    
+                    updateSidePanel();
+                    saveData(); // Save after upload
+                    showToast("✅ KML Imported Successfully");
+
+                } catch (error) {
+                    console.error(error);
+                    showToast("❌ Error parsing KML file");
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        window.zoomToLayer = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) {
+                if(layer.getBounds) map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                else if(layer.getLatLng) {
+                    map.flyTo(layer.getLatLng(), 16);
+                    layer.openPopup();
+                }
+            }
+        };
+
+        window.openModalById = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) openModal(layer);
+        };
+
+        window.deleteLayerById = function(id) {
+            var layer = drawnItems.getLayer(id);
+            if(layer) {
+                drawnItems.removeLayer(layer);
+                updateSidePanel();
+                saveData(); // Save deletion
+                showToast("Boundary removed");
+            }
+        };
+
+        function getCenter(layer) {
+            return layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
+        }
+
+        // 8. UI Logic
+        function openModal(layer) {
+            currentLayer = layer;
+            var props = currentLayer.feature.properties;
+            document.getElementById('kmlName').value = props.name || "";
+            document.getElementById('kmlDesc').value = props.description || "";
+            
+            var stats = calculateStats(layer);
+            var statsDiv = document.getElementById('modalStats');
+            if(stats.isPoint) {
+                statsDiv.classList.add('hidden');
+            } else {
+                statsDiv.classList.remove('hidden');
+                document.getElementById('statArea').textContent = stats.areaAcres + " Acres";
+                document.getElementById('statPerimeter').textContent = stats.perimeterMeters + " m";
+            }
+
+            document.getElementById('propModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('propModal').style.display = 'none';
+            currentLayer = null;
+        }
+
+        function saveProperties() {
+            if (currentLayer) {
+                var name = document.getElementById('kmlName').value;
+                var desc = document.getElementById('kmlDesc').value;
+                
+                currentLayer.feature.properties.name = name;
+                currentLayer.feature.properties.description = desc;
+                
+                var isMarker = currentLayer instanceof L.Marker;
+                var offset = isMarker ? [0, -16] : [0, 0];
+                currentLayer.bindTooltip(name, { direction: 'top', offset: offset }).openTooltip();
+                
+                updateSidePanel(); 
+                saveData(); // Save property changes
+                showToast("Properties Saved");
+                closeModal();
+            }
+        }
+
+        // 9. Event Listeners
+        map.on('mousemove', function(e) {
+            document.getElementById('coords').innerHTML = "Lat: " + e.latlng.lat.toFixed(4) + ", Lng: " + e.latlng.lng.toFixed(4);
+        });
+
+        function showToast(message) {
+            var toast = document.getElementById('statusToast');
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const inputVal = document.getElementById('searchCoords').value.trim();
+            const parts = inputVal.split(/[\s,]+/);
+            if (parts.length < 2) { showToast("❌ Format: Lat, Lng"); return; }
+            const lat = parseFloat(parts[0]);
+            const lng = parseFloat(parts[1]);
+            
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90) { showToast("❌ Invalid coordinates"); return; }
+
+            map.flyTo([lat, lng], 16, { duration: 1.5 });
+            
+            L.marker([lat, lng], { icon: customMarkerIcon }).addTo(map)
+                .bindPopup(`<b>Search Result</b><br>Lat: ${lat}<br>Lng: ${lng}`)
+                .openPopup();
+            
+            showToast("📍 Moved to location");
+        });
+
+        // Draw Events
+        map.on(L.Draw.Event.CREATED, function (e) {
+            var layer = e.layer;
+            var type = e.layerType;
+
+            // Convert Circle to Polygon
+            if (type === 'circle') {
+                layer = createCirclePolygon(layer);
+                type = 'polygon';
+            }
+
+            layer.feature = layer.feature || {};
+            layer.feature.type = "Feature";
+            
+            var typeName = (type === 'marker') ? "Point " : "Field ";
+            
+            layer.feature.properties = {
+                name: typeName + layerCounter,
+                description: "Created on " + new Date().toLocaleDateString()
+            };
+            layerCounter++;
+
+            layer.on('click', function() { openModal(layer); });
+            
+            var tooltipOffset = (type === 'marker') ? [0, -16] : [0, 0];
+            layer.bindTooltip(layer.feature.properties.name, { direction: 'top', offset: tooltipOffset });
+
+            drawnItems.addLayer(layer);
+            updateSidePanel(); 
+            saveData(); // Save new shape
+            showToast("Added to list!");
+        });
+
+        map.on(L.Draw.Event.DELETED, function (e) {
+            updateSidePanel();
+            saveData(); // Save deletions
+            showToast("Boundary removed");
+        });
+
+        map.on(L.Draw.Event.EDITED, function (e) {
+            updateSidePanel();
+            saveData(); // Save edits (geometry changes)
+            showToast("Changes Saved");
+        });
+
+        // UPDATED DOWNLOAD LOGIC
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            var features = [];
+            
+            drawnItems.eachLayer(function(layer) {
+                var geojson = layer.toGeoJSON();
+                
+                if (layer.feature && layer.feature.properties) {
+                    geojson.properties = JSON.parse(JSON.stringify(layer.feature.properties));
+                }
+                
+                if (geojson.geometry.type === 'Polygon' || geojson.geometry.type === 'MultiPolygon') {
+                    geojson.properties['stroke'] = '#ff0000';
+                    geojson.properties['stroke-width'] = 2;
+                    geojson.properties['stroke-opacity'] = 1;
+                    geojson.properties['fill'] = '#ffffff';
+                    geojson.properties['fill-opacity'] = 0;
+                }
+                
+                features.push(geojson);
+            });
+
+            if (features.length === 0) { showToast("⚠️ List is empty"); return; }
+
+            var fileNameInput = document.getElementById('kmlFileName').value.trim();
+            var fileName = fileNameInput || "My_Boundaries"; 
+            fileName = fileName.replace(/[^a-z0-9_\-]/gi, '_');
+
+            var data = { "type": "FeatureCollection", "features": features };
+            
+            var kml = tokml(data, { 
+                simplestyle: true, 
+                name: 'name', 
+                description: 'description' 
+            });
+
+            var blob = new Blob([kml], {type: "application/vnd.google-earth.kml+xml"});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = fileName + ".kml";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showToast("✅ Downloaded " + fileName + ".kml");
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            if(Object.keys(drawnItems._layers).length === 0) return;
+            if(confirm("Clear all boundaries? This cannot be undone.")) {
+                drawnItems.clearLayers();
+                layerCounter = 1;
+                localStorage.removeItem('kamal_boundaries');
+                localStorage.removeItem('kamal_counter');
+                updateSidePanel();
+                showToast("All cleared");
+            }
+        });
+
+        // Initialize: Load Saved Data
+        loadData();
+    </script>
 </body>
 </html>
