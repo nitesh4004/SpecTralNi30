@@ -500,3 +500,17 @@ footer a {
 .slide-in-right {
   animation: slideInRight 0.6s ease-out;
 }
+
+
+/* OVERRIDE: Keep apps grid at 3 columns on all screen sizes */
+@media (max-width: 1024px) {
+  .apps-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .apps-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
