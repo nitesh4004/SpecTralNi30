@@ -17,491 +17,473 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- Turf.js for Area & Perimeter Calculations -->
+    <!-- Turf.js -->
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
-    <!-- toGeoJSON for KML Import -->
+    <!-- toGeoJSON -->
     <script src="https://unpkg.com/@mapbox/togeojson/togeojson.js"></script>
 
     <style>
-        /* General Reset & Layout */
+        /* Modern Reset & Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
             display: flex;
             height: 100vh;
-            background-color: #f4f4f4;
+            background-color: #0f172a; /* Slate 900 */
             overflow: hidden;
         }
 
-        /* Sidebar Styling */
+        /* --- Modern Glass Sidebar --- */
         .sidebar {
-            width: 340px;
-            background-color: #1a252f;
-            color: white;
+            width: 360px;
+            min-width: 360px; /* Prevent crushing */
+            background-color: rgba(30, 41, 59, 0.95); /* Slate 800 with opacity */
+            color: #f1f5f9;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            padding: 24px;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.25);
             z-index: 2000;
-            overflow-y: hidden;
+            /* Changed from transform to margin-left for proper layout reflow */
+            transition: margin-left 0.3s ease; 
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            margin-left: 0; /* Default open state */
+        }
+
+        .sidebar.collapsed {
+            margin-left: -360px; /* Pull off-screen */
+        }
+
+        /* Toggle Button */
+        .sidebar-toggle {
+            position: absolute;
+            right: -40px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #00d2d3;
+            color: #0f172a;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        .sidebar-toggle:hover {
+            width: 45px;
+            background-color: #22d3ee;
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #00d2d3;
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(to right, #00d2d3, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            gap: 12px;
+            letter-spacing: -0.5px;
         }
 
+        /* Section Styling */
         .action-section {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #34495e;
-            flex-shrink: 0;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .action-header {
             font-size: 11px;
-            color: #95a5a6;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            font-weight: 600;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            margin-bottom: 12px;
         }
 
-        /* Input & Buttons */
+        /* Modern Inputs */
         .sidebar-input {
-            background-color: #2c3e50;
-            border: 1px solid #34495e;
-            color: #ecf0f1;
-            padding: 8px;
-            border-radius: 4px;
+            background-color: #334155;
+            border: 1px solid #475569;
+            color: #f1f5f9;
+            padding: 10px 12px;
+            border-radius: 8px;
             font-size: 13px;
             width: 100%;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
         }
         .sidebar-input:focus {
             outline: none;
             border-color: #00d2d3;
+            background-color: #1e293b;
+            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.15);
         }
 
+        /* Modern Buttons */
         .action-btn {
             width: 100%;
-            padding: 8px;
-            margin-top: 8px;
+            padding: 10px;
+            margin-top: 10px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: 13px;
+            gap: 8px;
             transition: all 0.2s;
         }
-        .btn-primary { background-color: #00d2d3; color: #1a252f; }
-        .btn-primary:hover { background-color: #00b5b6; }
-        .btn-secondary { background-color: #e74c3c; color: white; }
-        .btn-secondary:hover { background-color: #c0392b; }
-        .btn-dark { background-color: #34495e; border: 1px solid #2c3e50; color: #ecf0f1; }
-        .btn-dark:hover { background-color: #2c3e50; }
-        .btn-outline { background: transparent; border: 1px dashed #7f8c8d; color: #bdc3c7; }
-        .btn-outline:hover { border-color: #ecf0f1; color: #ecf0f1; background: rgba(255,255,255,0.05); }
-        .btn-success { background-color: #27ae60; color: white; }
-        .btn-success:hover { background-color: #2ecc71; }
-        .btn-warning { background-color: #f39c12; color: white; }
-        .btn-warning:hover { background-color: #e67e22; }
+        .btn-primary { background: linear-gradient(135deg, #00d2d3 0%, #0891b2 100%); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .btn-secondary { background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-secondary:hover { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        
+        .btn-dark { background-color: #334155; color: #e2e8f0; border: 1px solid #475569; }
+        .btn-dark:hover { background-color: #475569; color: white; }
+        
+        .btn-outline { background: transparent; border: 1px dashed #64748b; color: #94a3b8; }
+        .btn-outline:hover { border-color: #00d2d3; color: #00d2d3; background: rgba(0, 210, 211, 0.05); }
+        
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .btn-warning:hover { opacity: 0.9; }
 
-        /* Boundary List Area */
+        /* List Area */
         .boundary-list-container {
             flex: 1;
             overflow-y: auto;
             margin-top: 10px;
-            padding-right: 5px;
+            padding-right: 4px;
         }
-        
-        .boundary-list-container::-webkit-scrollbar { width: 6px; }
-        .boundary-list-container::-webkit-scrollbar-track { background: #1a252f; }
-        .boundary-list-container::-webkit-scrollbar-thumb { background: #34495e; border-radius: 3px; }
+        .boundary-list-container::-webkit-scrollbar { width: 4px; }
+        .boundary-list-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 
+        /* Card Items */
         .boundary-item {
-            background: #2c3e50;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-left: 3px solid #00d2d3;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            transition: background 0.2s;
+            align-items: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .boundary-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #00d2d3;
+            border-radius: 4px 0 0 4px;
         }
         .boundary-item:hover {
-            background: #34495e;
-        }
-        .boundary-info {
-            flex: 1;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .boundary-name {
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #ecf0f1;
-        }
-        .boundary-meta {
-            font-size: 11px;
-            color: #95a5a6;
-            margin-top: 2px;
-        }
-        .boundary-stats {
-            font-size: 10px;
-            color: #f1c40f; /* Yellow for stats */
-            margin-top: 2px;
-            font-family: monospace;
-        }
-        .boundary-actions {
-            display: flex;
-            gap: 5px;
-            margin-left: 8px;
-        }
-        .icon-btn {
-            background: none;
-            border: none;
-            color: #bdc3c7;
-            cursor: pointer;
-            padding: 4px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-        .icon-btn.delete:hover { color: #e74c3c; }
-
-        .user-profile {
-            padding-top: 15px;
-            border-top: 1px solid #34495e;
-            font-size: 12px;
-            color: #7f8c8d;
-            flex-shrink: 0;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .top-bar {
-            height: 60px;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            z-index: 10;
-        }
-
-        .status-indicator {
-            font-size: 14px;
-            color: #27ae60;
-            font-weight: 600;
-        }
-
-        #map {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        .coord-box {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 1000;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            font-family: monospace;
-            color: #2c3e50;
-            pointer-events: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-color: #475569;
+            background: #253346;
         }
         
-        .fab {
+        .boundary-info { flex: 1; cursor: pointer; }
+        .boundary-name { font-size: 14px; font-weight: 600; color: #f8fafc; }
+        .boundary-meta { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+        .boundary-stats { 
+            font-size: 10px; 
+            color: #00d2d3; 
+            margin-top: 4px; 
+            background: rgba(0, 210, 211, 0.1); 
+            display: inline-block; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-weight: 600;
+        }
+
+        .icon-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .icon-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Map Area */
+        .main-content {
+            flex: 1;
+            position: relative;
+            background: #0f172a;
+            /* Ensure map resizes properly with flex */
+            transition: width 0.3s ease; 
+        }
+
+        #map { width: 100%; height: 100%; z-index: 1; }
+
+        /* Edit Mode Banner */
+        #editBanner {
             position: absolute;
-            bottom: 30px;
-            left: 30px; 
-            background-color: #00d2d3;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(245, 158, 11, 0.9);
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 3000;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            display: none;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+
+        /* Floating Controls */
+        .coord-box {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Custom Edit Handles (Dots) */
+        .leaflet-editing-icon {
+            border-radius: 50% !important;
+            background-color: #00d2d3 !important;
+            border: 2px solid #fff !important;
+            width: 12px !important;
+            height: 12px !important;
+            margin-left: -6px !important;
+            margin-top: -6px !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        .leaflet-editing-icon:hover {
+            transform: scale(1.2);
+            background-color: #fff !important;
+            border-color: #00d2d3 !important;
+        }
+
+        /* Modal Glass */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 4000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            width: 450px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
             color: white;
-            width: 50px;
-            height: 50px;
+        }
+        .modal-header { font-size: 18px; font-weight: 700; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; color: #f1f5f9; }
+        
+        .form-label { color: #94a3b8; font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-input {
+            background: #0f172a; border: 1px solid #334155; color: white;
+            padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 16px;
+        }
+        .form-input:focus { border-color: #00d2d3; outline: none; }
+
+        .stats-badge {
+            background: rgba(0, 210, 211, 0.1);
+            border: 1px solid rgba(0, 210, 211, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .stat-label { color: #22d3ee; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: white; }
+
+        .user-profile {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar-circle {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1000;
-            transition: transform 0.2s;
-        }
-        .fab:hover { transform: scale(1.1); }
-
-        .leaflet-draw-toolbar a {
-            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png');
-            background-repeat: no-repeat;
-        }
-        .leaflet-retina .leaflet-draw-toolbar a {
-            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png');
-        }
-
-        #statusToast {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(26, 37, 47, 0.9);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            z-index: 2000;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        /* CUSTOM EDIT HANDLES (DOTS) */
-        .leaflet-editing-icon {
-            border-radius: 50% !important; /* Make it a circle */
-            background-color: #00d2d3 !important; /* Cyan Theme Color */
-            border: 2px solid white !important; /* White Border */
-            width: 12px !important;
-            height: 12px !important;
-            margin-left: -6px !important; /* Center the dot */
-            margin-top: -6px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            display: none;
-            backdrop-filter: blur(2px);
-        }
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .modal-header {
-            font-size: 20px;
             font-weight: bold;
-            color: #1a252f;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 12px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #34495e;
-            font-size: 14px;
-        }
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #00d2d3;
-            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.1);
-        }
-
-        .stats-badge {
-            background: #fffbeb;
-            border: 1px solid #fcd34d;
-            color: #b45309;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-around;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #d97706; font-weight: bold; }
-        .stat-value { font-weight: bold; font-size: 14px; }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 8px;
-            padding-top: 16px;
-            border-top: 1px solid #eee;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="mainSidebar">
+        <!-- Toggle Button -->
+        <div class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+
         <div class="logo">
-            <i class="fa-solid fa-satellite"></i> KaMaL
+            <i class="fa-solid fa-satellite-dish"></i> KaMaL
         </div>
         
         <div class="action-section">
             <div class="action-header">Navigation</div>
             
-            <div class="mb-2">
-                <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
+            <div class="flex gap-2 mb-3">
+                <button id="locateBtn" class="action-btn btn-primary" style="margin-top:0; flex: 1;">
+                    <i class="fa-solid fa-location-crosshairs"></i> GPS
+                </button>
             </div>
-            <button id="searchBtn" class="action-btn btn-dark">
-                <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Go to Coords
-            </button>
+
+            <div class="flex gap-2">
+                <input type="text" id="searchCoords" placeholder="Lat, Lng (e.g. 28.6, 77.2)" class="sidebar-input">
+                <button id="searchBtn" class="action-btn btn-dark" style="margin-top:0; width: auto; padding: 0 15px;">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
         </div>
 
         <div class="action-section">
-            <div class="action-header">Tools</div>
+            <div class="action-header">Toolkit</div>
             
-            <!-- Toggle Edit Mode Button -->
-            <button id="editModeBtn" class="action-btn btn-outline mb-3" onclick="toggleEditMode()">
+            <button id="editModeBtn" class="action-btn btn-warning mb-3" onclick="toggleEditMode()">
                 <i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries
             </button>
 
             <!-- Filename Input -->
-            <div class="mb-2">
-                <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input">
+            <input type="text" id="kmlFileName" placeholder="Filename (e.g. My_Farm)" class="sidebar-input mb-2">
+            
+            <div class="flex gap-2 mt-2">
+                <button id="downloadBtn" class="action-btn btn-dark" style="margin-top:0;" title="Download KML">
+                    <i class="fa-solid fa-download"></i> Save
+                </button>
+                <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline" style="margin-top:0;" title="Upload KML">
+                    <i class="fa-solid fa-upload"></i> Load
+                </button>
+                <button id="clearBtn" class="action-btn btn-secondary" style="margin-top:0; width: auto;" title="Clear All">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
-            <button id="downloadBtn" class="action-btn btn-primary">
-                <i class="fa-solid fa-download"></i> Download All KML
-            </button>
             
-            <!-- Upload KML Input (Hidden) -->
+            <!-- Hidden Upload Input -->
             <input type="file" id="kmlFileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(this)">
-            
-            <button onclick="document.getElementById('kmlFileInput').click()" class="action-btn btn-outline">
-                <i class="fa-solid fa-upload"></i> Upload KML
-            </button>
-            
-            <button id="clearBtn" class="action-btn btn-secondary">
-                <i class="fa-solid fa-trash"></i> Clear All
-            </button>
         </div>
 
-        <div class="action-header flex justify-between items-center">
-            <span>Saved Fields</span>
-            <span id="fieldCount" class="bg-gray-700 text-xs px-2 py-0.5 rounded text-gray-300">0</span>
+        <div class="action-header flex justify-between items-center mt-2">
+            <span>My Fields</span>
+            <span id="fieldCount" class="bg-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-full">0</span>
         </div>
+        
         <div class="boundary-list-container" id="boundaryList">
-            <div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>
+            <div class="text-center text-gray-500 text-xs mt-8">
+                <i class="fa-regular fa-map mb-2 text-2xl opacity-50"></i><br>
+                Start drawing on the map
+            </div>
         </div>
 
         <div class="user-profile">
-            Logged in as: Nitesh Kumar<br>
-            <span style="color: #27ae60;"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Online</span>
+            <div class="avatar-circle">NK</div>
+            <div>
+                <div class="text-sm font-semibold">Nitesh Kumar</div>
+                <div class="text-xs text-green-400">● Online</div>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-        <div class="top-bar">
-            <h3 class="text-lg font-semibold text-gray-700">Geospatial Dashboard</h3>
-            <div class="flex items-center gap-3">
-                 <span class="status-indicator"><i class="fa-solid fa-check-circle"></i> System Ready</span>
-            </div>
+        <!-- Edit Mode Banner -->
+        <div id="editBanner">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i> EDIT MODE ACTIVE
         </div>
-        
-        <div id="statusToast">Action Completed</div>
+
+        <!-- Toast Notification -->
+        <div id="statusToast" class="fixed top-24 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg z-[3000] opacity-0 transition-opacity pointer-events-none flex items-center gap-3 border border-slate-700">
+            <i class="fa-solid fa-circle-info text-cyan-400"></i>
+            <span id="toastMsg">Notification</span>
+        </div>
 
         <div id="map"></div>
         
-        <div class="coord-box" id="coords">Lat: 00.0000, Lng: 00.0000</div>
-        
-        <div class="fab" title="Download KML" onclick="document.getElementById('downloadBtn').click()">
-            <i class="fa-solid fa-cloud-arrow-down"></i>
-        </div>
+        <div class="coord-box" id="coords">00.0000, 00.0000</div>
     </div>
 
     <!-- Properties Modal -->
     <div id="propModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <span>Edit Boundary Properties</span>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button>
+                <span>Field Properties</span>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white float-right"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="kmlName" class="form-input" placeholder="e.g. AOI 1">
+            <div class="mb-4">
+                <label class="form-label">Field Name</label>
+                <input type="text" id="kmlName" class="form-input" placeholder="e.g. North Plot">
             </div>
 
-            <!-- Stats Badge in Modal -->
-            <div id="modalStats" class="stats-badge hidden">
+            <div id="modalStats" class="stats-badge">
                 <div class="stat-item">
                     <div class="stat-label">Area</div>
-                    <div class="stat-value" id="statArea">0 Acres</div>
+                    <div class="stat-value" id="statArea">0.00 <span class="text-xs font-normal opacity-70">Acres</span></div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item border-l border-cyan-500/20 pl-4">
                     <div class="stat-label">Perimeter</div>
-                    <div class="stat-value" id="statPerimeter">0 m</div>
+                    <div class="stat-value" id="statPerimeter">0 <span class="text-xs font-normal opacity-70">m</span></div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <div class="flex justify-between items-center mb-1">
-                    <label class="mb-0">Description</label>
-                </div>
-                <textarea id="kmlDesc" class="form-input" rows="3" placeholder="Add details about this area..."></textarea>
+            <div class="mb-2">
+                <label class="form-label">Notes</label>
+                <textarea id="kmlDesc" class="form-input" rows="3" placeholder="Add crop details, soil type, etc..."></textarea>
             </div>
 
             <div class="modal-footer">
-                <button onclick="closeModal()" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100 font-medium">Cancel</button>
-                <button onclick="saveProperties()" class="px-4 py-2 rounded bg-cyan-500 text-white hover:bg-cyan-600 font-medium shadow-sm">Save Changes</button>
+                <button onclick="closeModal()" class="action-btn btn-dark" style="margin:0; width:auto;">Cancel</button>
+                <button onclick="saveProperties()" class="action-btn btn-primary" style="margin:0; width:auto;">Save Changes</button>
             </div>
         </div>
     </div>
@@ -533,9 +515,9 @@
         // --- Marker Icon (Plus Sign) ---
         var customMarkerIcon = L.divIcon({
             className: 'custom-marker-icon',
-            html: '<i class="fa-solid fa-plus" style="color: #e74c3c; font-size: 32px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4)); font-weight: 900;"></i>',
+            html: '<i class="fa-solid fa-plus" style="color: #00d2d3; font-size: 32px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4)); font-weight: 900;"></i>',
             iconSize: [32, 32],
-            iconAnchor: [16, 16], // Centered
+            iconAnchor: [16, 16],
             popupAnchor: [0, -16]
         });
 
@@ -549,15 +531,15 @@
                 polyline: false, 
                 marker: { icon: customMarkerIcon },
                 circle: {
-                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01, clickable: true }
+                    shapeOptions: { color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 }
                 },
                 circlemarker: false,
                 polygon: {
                     allowIntersection: false, showArea: true,
-                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                    shapeOptions: { color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 }
                 },
                 rectangle: {
-                    shapeOptions: { color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 }
+                    shapeOptions: { color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 }
                 }
             },
             edit: { featureGroup: drawnItems, remove: true }
@@ -568,7 +550,18 @@
         // 4. State Management
         var currentLayer = null;
         var layerCounter = 1;
-        var isEditMode = false; // Track edit mode state
+        var isEditMode = false;
+
+        // --- Sidebar Toggle Logic (REVISED) ---
+        function toggleSidebar() {
+            var sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            // CRITICAL: Refresh map size after transition
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 350); // Slightly longer than CSS transition to be safe
+        }
 
         // --- AUTO-SAVE LOGIC ---
         function saveData() {
@@ -589,8 +582,9 @@
                     onEachFeature: function(feature, layer) {
                         layer.feature = layer.feature || feature;
                         
+                        // Restore modern style
                         if (feature.geometry.type !== 'Point') {
-                            if(layer.setStyle) layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                            if(layer.setStyle) layer.setStyle({ color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 });
                         } else {
                             layer.setIcon(customMarkerIcon);
                         }
@@ -612,12 +606,12 @@
         // --- Toggle Edit Mode ---
         function toggleEditMode() {
             var btn = document.getElementById('editModeBtn');
+            var banner = document.getElementById('editBanner');
             isEditMode = !isEditMode;
 
             if (isEditMode) {
-                // Enable Editing
                 btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Adjustments';
-                btn.className = "action-btn btn-warning"; 
+                banner.style.display = 'block';
                 
                 drawnItems.eachLayer(function(layer) {
                     if (layer instanceof L.Marker) {
@@ -626,11 +620,10 @@
                         if(layer.editing) layer.editing.enable();
                     }
                 });
-                showToast("✏️ Edit Mode: Drag points to adjust");
+                showToast("Edit Mode: Drag white dots to adjust");
             } else {
-                // Disable Editing (Save)
                 btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Adjust Boundaries';
-                btn.className = "action-btn btn-outline";
+                banner.style.display = 'none';
                 
                 drawnItems.eachLayer(function(layer) {
                     if (layer instanceof L.Marker) {
@@ -641,8 +634,8 @@
                 });
                 
                 saveData();
-                updateSidePanel(); // Recalculate stats
-                showToast("✅ Adjustments Saved");
+                updateSidePanel();
+                showToast("Adjustments Saved");
             }
         }
 
@@ -683,7 +676,7 @@
             countSpan.textContent = layers.length;
 
             if(layers.length === 0) {
-                listContainer.innerHTML = '<div class="text-center text-gray-500 text-xs mt-4 italic">No fields drawn yet</div>';
+                listContainer.innerHTML = '<div class="text-center text-gray-500 text-xs mt-8"><i class="fa-regular fa-map mb-2 text-2xl opacity-50"></i><br>Start drawing on the map</div>';
                 return;
             }
 
@@ -692,15 +685,15 @@
                 var layerId = L.stamp(layer);
                 var stats = calculateStats(layer);
                 var statsHtml = !stats.isPoint ? 
-                    `<div class="boundary-stats">Area: ${stats.areaAcres} ac | Perim: ${stats.perimeterMeters} m</div>` : 
-                    `<div class="boundary-stats">Location Marker</div>`;
+                    `<div class="boundary-stats">${stats.areaAcres} ac | ${stats.perimeterMeters} m</div>` : 
+                    `<div class="boundary-stats">Marker</div>`;
 
                 var div = document.createElement('div');
                 div.className = 'boundary-item';
                 div.innerHTML = `
                     <div class="boundary-info" onclick="zoomToLayer(${layerId})">
                         <div class="boundary-name">${props.name}</div>
-                        <div class="boundary-meta">${props.description ? props.description.substring(0, 15) + '...' : ''}</div>
+                        <div class="boundary-meta">${props.description ? props.description.substring(0, 15) + '...' : 'No notes'}</div>
                         ${statsHtml}
                     </div>
                     <div class="boundary-actions">
@@ -708,15 +701,15 @@
                         <button class="icon-btn delete" onclick="deleteLayerById(${layerId})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
-                div.addEventListener('mouseenter', function() { layer.setStyle({ weight: 5, color: '#00d2d3' }); });
-                div.addEventListener('mouseleave', function() { layer.setStyle({ weight: 3, color: '#ff0000' }); });
+                div.addEventListener('mouseenter', function() { layer.setStyle({ weight: 5, fillOpacity: 0.3 }); });
+                div.addEventListener('mouseleave', function() { layer.setStyle({ weight: 3, fillOpacity: 0.1 }); });
                 listContainer.appendChild(div);
             });
         }
 
         // KML Upload
         function handleFileUpload(input) {
-            if(isEditMode) toggleEditMode(); // Force exit edit mode
+            if(isEditMode) toggleEditMode();
             var file = input.files[0];
             if (!file) return;
 
@@ -737,9 +730,9 @@
                             layer.feature.properties = feature.properties || {};
                             
                             if (!layer.feature.properties.name) layer.feature.properties.name = "Imported " + layerCounter++;
-                            if (!layer.feature.properties.description) layer.feature.properties.description = "Imported from KML";
+                            if (!layer.feature.properties.description) layer.feature.properties.description = "Imported KML";
 
-                            if (layer.setStyle) layer.setStyle({ color: '#ff0000', weight: 3, opacity: 1, fillOpacity: 0.01 });
+                            if (layer.setStyle) layer.setStyle({ color: '#00d2d3', weight: 3, opacity: 1, fillOpacity: 0.1 });
                             
                             layer.on('click', function() { openModal(layer); });
                             var tooltipOffset = (feature.geometry.type === 'Point') ? [0, -16] : [0, 0];
@@ -783,7 +776,6 @@
 
         // UI Logic
         function openModal(layer) {
-            // Prevent modal if dragging points in edit mode
             if(isEditMode) return; 
 
             currentLayer = layer;
@@ -797,8 +789,8 @@
                 statsDiv.classList.add('hidden');
             } else {
                 statsDiv.classList.remove('hidden');
-                document.getElementById('statArea').textContent = stats.areaAcres + " Acres";
-                document.getElementById('statPerimeter').textContent = stats.perimeterMeters + " m";
+                document.getElementById('statArea').textContent = stats.areaAcres;
+                document.getElementById('statPerimeter').textContent = stats.perimeterMeters;
             }
             document.getElementById('propModal').style.display = 'flex';
         }
@@ -832,25 +824,62 @@
 
         function showToast(message) {
             var toast = document.getElementById('statusToast');
-            toast.textContent = message;
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+            var msgSpan = document.getElementById('toastMsg');
+            msgSpan.textContent = message;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
         }
 
         document.getElementById('searchBtn').addEventListener('click', function() {
             const inputVal = document.getElementById('searchCoords').value.trim();
             const parts = inputVal.split(/[\s,]+/);
-            if (parts.length < 2) { showToast("❌ Format: Lat, Lng"); return; }
+            if (parts.length < 2) { showToast("Format: Lat, Lng"); return; }
             const lat = parseFloat(parts[0]);
             const lng = parseFloat(parts[1]);
             
-            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90) { showToast("❌ Invalid coordinates"); return; }
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90) { showToast("Invalid coordinates"); return; }
 
             map.flyTo([lat, lng], 16, { duration: 1.5 });
             L.marker([lat, lng], { icon: customMarkerIcon }).addTo(map)
-                .bindPopup(`<b>Search Result</b><br>Lat: ${lat}<br>Lng: ${lng}`)
+                .bindPopup(`<b>Search Result</b><br>${lat}, ${lng}`)
                 .openPopup();
-            showToast("📍 Moved to location");
+            showToast("Moved to location");
+        });
+
+        // --- GPS Logic ---
+        document.getElementById('locateBtn').addEventListener('click', function() {
+            if (!navigator.geolocation) { showToast("Geolocation not supported"); return; }
+
+            var btn = this;
+            var originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Finding...';
+            btn.classList.add('opacity-70');
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    var acc = position.coords.accuracy;
+
+                    map.flyTo([lat, lng], 18);
+                    
+                    L.marker([lat, lng], { icon: customMarkerIcon }).addTo(map)
+                        .bindPopup(`<b>You Are Here</b><br>Accuracy: ${Math.round(acc)}m`)
+                        .openPopup();
+
+                    L.circle([lat, lng], { radius: acc, color: '#00d2d3', fillOpacity: 0.1, weight: 1 }).addTo(map);
+                        
+                    showToast(`Location Found`);
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('opacity-70');
+                },
+                function(error) {
+                    showToast("GPS Error: " + error.message);
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('opacity-70');
+                },
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+            );
         });
 
         // Draw Events
@@ -879,7 +908,7 @@
             drawnItems.addLayer(layer);
             updateSidePanel(); 
             saveData(); 
-            showToast("Added to list!");
+            showToast("Added to list");
         });
 
         map.on(L.Draw.Event.DELETED, function (e) {
@@ -896,7 +925,7 @@
 
         // Download Logic
         document.getElementById('downloadBtn').addEventListener('click', function() {
-            if(isEditMode) toggleEditMode(); // Force save before download
+            if(isEditMode) toggleEditMode();
             
             var features = [];
             drawnItems.eachLayer(function(layer) {
@@ -915,7 +944,7 @@
                 features.push(geojson);
             });
 
-            if (features.length === 0) { showToast("⚠️ List is empty"); return; }
+            if (features.length === 0) { showToast("List is empty"); return; }
 
             var fileNameInput = document.getElementById('kmlFileName').value.trim();
             var fileName = fileNameInput || "My_Boundaries"; 
@@ -933,7 +962,7 @@
             a.click();
             document.body.removeChild(a);
             
-            showToast("✅ Downloaded " + fileName + ".kml");
+            showToast("Downloaded " + fileName + ".kml");
         });
 
         document.getElementById('clearBtn').addEventListener('click', function() {
