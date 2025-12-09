@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SpecTralNi30 - Advanced Geospatial Data Science & Remote Sensing Solutions for Satellite Imagery Analysis">
+    <meta name="keywords" content="geospatial, remote sensing, satellite imagery, GIS, machine learning, agriculture">
     <title>SpecTralNi30 - Geospatial Data Science</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,13 +36,15 @@
 
     <!-- Hero Section -->
     <section id="home" class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">SpecTralNi30</h1>
-            <p class="hero-subtitle">Advanced Geospatial Data Science & Remote Sensing Solutions</p>
-            <p class="hero-description">Transforming satellite imagery into actionable insights through cutting-edge machine learning and geospatial analysis</p>
-            <a href="#services" class="cta-button">Explore Services</a>
-        </div>
         <div class="hero-background"></div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">SpecTralNi30</h1>
+                <p class="hero-subtitle">Advanced Geospatial Data Science & Remote Sensing Solutions</p>
+                <p class="hero-description">Transforming satellite imagery into actionable insights through cutting-edge machine learning and geospatial analysis</p>
+                <a href="#services" class="cta-button">Explore Services</a>
+            </div>
+        </div>
     </section>
 
     <!-- About Section -->
@@ -48,32 +52,56 @@
         <div class="container">
             <h2 class="section-title">About SpecTralNi30</h2>
             <div class="about-content">
-                <div class="about-text">
-                    <p>SpecTralNi30 is a specialized geospatial data science initiative focused on leveraging satellite imagery and remote sensing technologies to solve real-world challenges in agriculture, disaster management, and environmental monitoring.</p>
-                    <h3>Our expertise spans across multiple domains:</h3>
-                    <ul class="expertise-list">
-                        <li><strong>Remote Sensing:</strong> Sentinel-1 & Sentinel-2 satellite data processing</li>
-                        <li><strong>Machine Learning:</strong> Deep learning models for geospatial classification</li>
-                        <li><strong>Agricultural Monitoring:</strong> Crop yield prediction and land cover analysis</li>
-                        <li><strong>Flood Mapping:</strong> Inundation analysis and disaster mapping</li>
-                        <li><strong>GIS Analysis:</strong> Advanced spatial analysis using QGIS and ArcGIS</li>
-                        <li><strong>Data Processing:</strong> Cloud-based geospatial data processing with Python</li>
-                    </ul>
+                <p class="about-text">SpecTralNi30 is a specialized geospatial data science initiative focused on leveraging satellite imagery and remote sensing technologies to solve real-world challenges in agriculture, disaster management, and environmental monitoring.</p>
+                
+                <h3 class="subsection-title">Our expertise spans across multiple domains:</h3>
+                <div class="expertise-grid">
+                    <div class="expertise-item">
+                        <i class="fas fa-satellite"></i>
+                        <h4>Remote Sensing</h4>
+                        <p>Sentinel-1 & Sentinel-2 satellite data processing</p>
+                    </div>
+                    <div class="expertise-item">
+                        <i class="fas fa-brain"></i>
+                        <h4>Machine Learning</h4>
+                        <p>Deep learning models for geospatial classification</p>
+                    </div>
+                    <div class="expertise-item">
+                        <i class="fas fa-wheat"></i>
+                        <h4>Agricultural Monitoring</h4>
+                        <p>Crop yield prediction and land cover analysis</p>
+                    </div>
+                    <div class="expertise-item">
+                        <i class="fas fa-water"></i>
+                        <h4>Flood Mapping</h4>
+                        <p>Inundation analysis and disaster mapping</p>
+                    </div>
+                    <div class="expertise-item">
+                        <i class="fas fa-map"></i>
+                        <h4>GIS Analysis</h4>
+                        <p>Advanced spatial analysis using QGIS and ArcGIS</p>
+                    </div>
+                    <div class="expertise-item">
+                        <i class="fas fa-database"></i>
+                        <h4>Data Processing</h4>
+                        <p>Cloud-based geospatial data processing with Python</p>
+                    </div>
                 </div>
-                <div class="about-stats">
-                    <div class="stat-box">
+
+                <div class="stats-grid">
+                    <div class="stat-card">
                         <h3>100+</h3>
                         <p>Satellite Images Processed</p>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-card">
                         <h3>90%</h3>
                         <p>Model Accuracy</p>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-card">
                         <h3>2+</h3>
                         <p>Years Experience</p>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-card">
                         <h3>50+</h3>
                         <p>Projects Completed</p>
                     </div>
@@ -82,45 +110,45 @@
         </div>
     </section>
 
-    <!-- Interactive Apps Section -->
-    <section id="apps-section" class="services apps-section">
+    <!-- Apps Section -->
+    <section class="apps-section">
         <div class="container">
             <h2 class="section-title">Interactive Apps & Tools</h2>
             <div class="apps-grid">
                 <div class="app-card">
-                    <div class="app-header">
-                        <i class="fas fa-map"></i>
-                        <h3>SpecTralNi30</h3>
+                    <div class="app-icon">
+                        <i class="fas fa-chart-bar"></i>
                     </div>
+                    <h3>SpecTralNi30</h3>
                     <p>Advanced geospatial analysis platform for satellite imagery processing, vegetation monitoring, and LULC classification.</p>
                     <div class="app-buttons">
-                        <a href="https://spectralni30.streamlit.app/" class="btn btn-primary" target="_blank">Launch App</a>
+                        <a href="https://spectralni30.streamlit.app/" class="btn btn-primary">Launch App</a>
                         <a href="tech-notes.html" class="btn btn-secondary">Learn More</a>
                     </div>
                 </div>
                 <div class="app-card">
-                    <div class="app-header">
+                    <div class="app-icon">
                         <i class="fas fa-exchange-alt"></i>
-                        <h3>GeoFormatX</h3>
                     </div>
+                    <h3>GeoFormatX</h3>
                     <p>Universal geospatial data format converter with support for GeoJSON, Shapefile, GeoTIFF, NetCDF, and more.</p>
                     <div class="app-buttons">
-                        <a href="https://geoformatx.streamlit.app/" class="btn btn-primary" target="_blank">Launch App</a>
+                        <a href="https://geoformatx.streamlit.app/" class="btn btn-primary">Launch App</a>
                         <a href="tech-notes.html" class="btn btn-secondary">Learn More</a>
                     </div>
                 </div>
-            </div>
-                            <div class="app-card">
-                    <div class="app-header">
-                        <i class="fas fa-map"></i>
-                        <h3>KaMaL</h3>
+                <div class="app-card">
+                    <div class="app-icon">
+                        <i class="fas fa-draw-polygon"></i>
                     </div>
-                    <p>KML Boundary Maker - Create and manage geospatial boundaries with interactive mapping. Draw polygons, circles, and markers on satellite imagery. Export to KML format for GIS analysis.</p>
+                    <h3>KaMaL</h3>
+                    <p>KML Boundary Maker - Create and manage geospatial boundaries with interactive mapping and export to KML format.</p>
                     <div class="app-buttons">
-                        <a href="kamal.html" class="btn btn-primary" target="_blank">Launch App</a>
+                        <a href="kamal.html" class="btn btn-primary">Launch App</a>
                         <a href="#" class="btn btn-secondary">Learn More</a>
                     </div>
                 </div>
+            </div>
         </div>
     </section>
 
@@ -130,32 +158,44 @@
             <h2 class="section-title">Our Services</h2>
             <div class="services-grid">
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-leaf"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
                     <h3>Agricultural Monitoring</h3>
                     <p>Crop yield forecasting, vegetation index analysis, and field-level crop monitoring using multispectral satellite data.</p>
                 </div>
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-water"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-water"></i>
+                    </div>
                     <h3>Flood Mapping</h3>
                     <p>Rapid inundation mapping, flood depth estimation, and disaster assessment using SAR and optical imagery.</p>
                 </div>
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-layer-group"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-city"></i>
+                    </div>
                     <h3>Land Use Classification</h3>
                     <p>Automated LULC mapping, urban sprawl analysis, and environmental change detection using machine learning.</p>
                 </div>
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-brain"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
                     <h3>ML Model Development</h3>
                     <p>Custom deep learning models for image classification, object detection, and predictive analytics.</p>
                 </div>
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-database"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
                     <h3>Data Processing</h3>
                     <p>Cloud-based geospatial data processing, preprocessing pipelines, and database management solutions.</p>
                 </div>
                 <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="service-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                     <h3>Spatial Analytics</h3>
                     <p>Advanced GIS analysis, geospatial statistics, and custom cartography for decision-making.</p>
                 </div>
@@ -163,33 +203,33 @@
         </div>
     </section>
 
-    <!-- Technology Stack Section -->
-    <section class="technologies">
+    <!-- Tech Stack Section -->
+    <section id="projects" class="tech-stack">
         <div class="container">
             <h2 class="section-title">Technology Stack</h2>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <h4><i class="fas fa-tools"></i> Geospatial Tools</h4>
+            <div class="stack-grid">
+                <div class="stack-item">
+                    <h4>Geospatial Tools</h4>
                     <p>QGIS, ArcGIS, Google Earth Engine, Sentinel Hub</p>
                 </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-code"></i> Programming</h4>
+                <div class="stack-item">
+                    <h4>Programming</h4>
                     <p>Python, JavaScript (GEE), SQL, GDAL/OGR</p>
                 </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-cube"></i> Libraries</h4>
+                <div class="stack-item">
+                    <h4>Libraries</h4>
                     <p>Rasterio, GeoPandas, Scikit-learn, TensorFlow</p>
                 </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-satellite"></i> Satellite Data</h4>
+                <div class="stack-item">
+                    <h4>Satellite Data</h4>
                     <p>Sentinel-1, Sentinel-2, Landsat, MODIS</p>
                 </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-cloud"></i> Cloud Platforms</h4>
+                <div class="stack-item">
+                    <h4>Cloud Platforms</h4>
                     <p>Google Cloud, AWS, Azure, Google Earth Engine</p>
                 </div>
-                <div class="tech-item">
-                    <h4><i class="fas fa-chart-pie"></i> Visualization</h4>
+                <div class="stack-item">
+                    <h4>Visualization</h4>
                     <p>Folium, Leaflet, Matplotlib, Plotly</p>
                 </div>
             </div>
@@ -201,45 +241,31 @@
         <div class="container">
             <h2 class="section-title">Get In Touch</h2>
             <div class="contact-content">
-                <div class="contact-form">
+                <div class="contact-form-wrapper">
                     <h3>Let's Connect</h3>
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <input type="text" placeholder="Your Name" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" placeholder="Your Email" required>
-                        </div>
-                        <div class="form-group">
-                            <textarea placeholder="Your Message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="submit-btn">Send Message</button>
+                    <form class="contact-form" id="contactForm">
+                        <input type="text" placeholder="Your Name" required>
+                        <input type="email" placeholder="Your Email" required>
+                        <textarea placeholder="Your Message" rows="5" required></textarea>
+                        <button type="submit" class="cta-button">Send Message</button>
                     </form>
                 </div>
                 <div class="contact-info">
                     <h3>Contact Information</h3>
                     <p>Interested in geospatial solutions? Let's discuss how we can leverage satellite data for your project.</p>
-                    <div class="contact-details">
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <strong>Email:</strong>
-                                <p>nitesh.kumar@swan.co.in</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <strong>Location:</strong>
-                                <p>India</p>
-                            </div>
-                        </div>
+                    <div class="info-item">
+                        <strong>Email:</strong>
+                        <p><a href="mailto:nitesh.kumar@swan.co.in">nitesh.kumar@swan.co.in</a></p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Location:</strong>
+                        <p>India</p>
                     </div>
                     <div class="social-links">
-                        <a href="https://nitesh4004.github.io/" target="_blank" title="Portfolio"><i class="fas fa-globe"></i></a>
-                        <a href="https://github.com/nitesh4004" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
-                        <a href="https://linkedin.com/in/nitesh-kumar-b07/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                        <a href="https://twitter.com/" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://nitesh4004.github.io/" title="Portfolio"><i class="fas fa-globe"></i></a>
+                        <a href="https://github.com/nitesh4004" title="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="https://linkedin.com/in/nitesh-kumar-b07/" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://twitter.com/" title="Twitter"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
             </div>
@@ -250,7 +276,7 @@
     <footer class="footer">
         <div class="container">
             <p>&copy; 2025 SpecTralNi30 - Geospatial Data Science. All rights reserved.</p>
-            <p class="footer-tagline">Transforming satellite imagery into insights</p>
+            <p>Transforming satellite imagery into insights</p>
         </div>
     </footer>
 
