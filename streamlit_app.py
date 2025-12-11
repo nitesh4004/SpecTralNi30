@@ -220,10 +220,15 @@ def preprocess_landsat(img):
     return img.addBands(opticalBands, None, True).addBands(thermalBands, None, True)
 
 def rename_landsat_bands(img):
-    return img.select(
+    # Select optical and rename
+    optical = img.select(
         ['SR_B1', 'SR_B2', 'SR_B3', 'SR_B4', 'SR_B5', 'SR_B6', 'SR_B7'],
         ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']
     )
+    # KEEP THERMAL BAND (ST_B10)
+    # We check if ST_B10 exists (it should in Collection 2 L2)
+    thermal = img.select(['ST_B10'])
+    return optical.addBands(thermal)
 
 def compute_index(img, platform, index, formula=None):
     if platform == "Sentinel-2 (Optical)":
@@ -239,9 +244,15 @@ def compute_index(img, platform, index, formula=None):
         if index in map_i: return img.normalizedDifference(map_i[index]).rename(index.split()[0])
 
     elif "Landsat" in platform:
+        if index == 'LST (Thermal)':
+            # Convert Kelvin to Celsius: K - 273.15
+            # ST_B10 is already in Kelvin from preprocess_landsat
+            return img.select('ST_B10').subtract(273.15).rename('LST')
+
         if index == '🛠️ Custom (Band Math)':
             map_b = {'B1':img.select('B1'), 'B2':img.select('B2'), 'B3':img.select('B3'), 'B4':img.select('B4'), 'B5':img.select('B5'), 'B6':img.select('B6'), 'B7':img.select('B7')}
             return img.expression(formula, map_b).rename('Custom')
+        
         map_i = {'NDVI': ['B5','B4'], 'GNDVI': ['B5','B3'], 'NDWI (Water)': ['B3','B5'], 'NDMI': ['B5','B6']}
         if index in map_i: return img.normalizedDifference(map_i[index]).rename(index.split()[0])
 
@@ -579,10 +590,18 @@ with st.sidebar:
         
         # --- SENSOR CONFIG ---
         if is_optical:
-            idx = st.selectbox("Spectral Product", ['NDVI', 'GNDVI', 'NDWI (Water)', 'NDMI', '🛠️ Custom (Band Math)'])
-            if 'Custom' in idx:
-                def_form = "(B5-B4)/(B5+B4)" if "Landsat" in platform else "(B8-B4)/(B8+B4)"
-                formula = st.text_input("Math Expression", def_form)
+            # ADDED LST OPTION FOR LANDSAT
+            if "Landsat" in platform:
+                idx = st.selectbox("Spectral Product", ['NDVI', 'GNDVI', 'NDWI (Water)', 'NDMI', 'LST (Thermal)', '🛠️ Custom (Band Math)'])
+                if 'Custom' in idx:
+                    def_form = "(B5-B4)/(B5+B4)" 
+                    formula = st.text_input("Math Expression", def_form)
+            else:
+                idx = st.selectbox("Spectral Product", ['NDVI', 'GNDVI', 'NDWI (Water)', 'NDMI', '🛠️ Custom (Band Math)'])
+                if 'Custom' in idx:
+                    def_form = "(B8-B4)/(B8+B4)"
+                    formula = st.text_input("Math Expression", def_form)
+            
             cloud = st.slider("Cloud Tolerance %", 0, 30, 10)
         else:
             idx = st.selectbox("Polarization", ['VV', 'VH', 'VH/VV Ratio', '🛠️ Custom (Band Math)'])
@@ -779,6 +798,7 @@ if not st.session_state['calculated']:
         <p style="color:#94a3b8; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
     </div>
     """, unsafe_allow_html=True)
+    # FORCED GOOGLE HYBRID
     m = geemap.Map(height=500, basemap="HYBRID")
     if st.session_state['roi']:
         m.centerObject(st.session_state['roi'], 12)
@@ -900,6 +920,7 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col_map:
+                # FORCED GOOGLE HYBRID
                 m = geemap.Map(height=700, basemap="HYBRID")
                 m.centerObject(roi, 13)
                 m.addLayer(index_img, vis_params, p['idx'])
@@ -913,6 +934,7 @@ else:
         
         # 1. SETUP MAP
         col_map, col_res = st.columns([3, 1])
+        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
@@ -1162,6 +1184,7 @@ else:
     # ==========================================
     elif p['mode'] == "Geospatial-embeddings-use-cases":
         col_map, col_res = st.columns([3, 1])
+        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
@@ -1428,6 +1451,7 @@ else:
     # ==========================================
     elif p['mode'] == "Landslide Detection (SAR)":
         col_map, col_res = st.columns([3, 1])
+        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
