@@ -394,7 +394,8 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             'crs': 'EPSG:4326' 
         })
         
-        response = requests.get(thumb_url, timeout=30)
+        # INCREASED TIMEOUT HERE
+        response = requests.get(thumb_url, timeout=120)
         
         if response.status_code != 200:
             st.error(f"GEE Server Error (Status {response.status_code})")
@@ -612,10 +613,6 @@ with st.sidebar:
         st.session_state['vis_max'] = vmax
         
         st.markdown("---")
-        # Map Style Selector (Moved here for better context)
-        map_provider = st.radio("Base Map Style", ["Google Hybrid", "Esri World Imagery"], horizontal=True)
-        # Determine basemap key string
-        selected_basemap = "HYBRID" if map_provider == "Google Hybrid" else "Esri.WorldImagery"
 
     elif mode == "LULC Classifier": # LULC MODE
         st.markdown("### 2. ML Architecture")
@@ -665,8 +662,6 @@ with st.sidebar:
             split_ratio = st.slider("Train/Validation Split", 0.5, 0.9, 0.8)
             
         st.markdown("---")
-        map_provider = st.radio("Base Map Style", ["Google Hybrid", "Esri World Imagery"], horizontal=True)
-        selected_basemap = "HYBRID" if map_provider == "Google Hybrid" else "Esri.WorldImagery"
 
     elif mode == "Geospatial-embeddings-use-cases":
         st.markdown("### 2. AI Embeddings Task")
@@ -680,8 +675,6 @@ with st.sidebar:
         cloud = 0 # Embeddings don't use this directly in the same way
         
         st.markdown("---")
-        map_provider = st.radio("Base Map Style", ["Google Hybrid", "Esri World Imagery"], horizontal=True)
-        selected_basemap = "HYBRID" if map_provider == "Google Hybrid" else "Esri.WorldImagery"
 
     elif mode == "Landslide Detection (SAR)":
         st.markdown("### 2. Event Configuration")
@@ -703,8 +696,6 @@ with st.sidebar:
         cloud = 0
         
         st.markdown("---")
-        map_provider = st.radio("Base Map Style", ["Google Hybrid", "Esri World Imagery"], horizontal=True)
-        selected_basemap = "HYBRID" if map_provider == "Google Hybrid" else "Esri.WorldImagery"
 
     # Common Temporal Window (Only for non-SAR/Embeddings modes)
     if mode not in ["Geospatial-embeddings-use-cases", "Landslide Detection (SAR)"]:
@@ -780,10 +771,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Default to HYBRID if not set
-if 'selected_basemap' not in locals():
-    selected_basemap = "HYBRID"
-
 if not st.session_state['calculated']:
     # Welcome View
     st.markdown("""
@@ -792,7 +779,7 @@ if not st.session_state['calculated']:
         <p style="color:#94a3b8; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
     </div>
     """, unsafe_allow_html=True)
-    m = geemap.Map(height=500, basemap=selected_basemap)
+    m = geemap.Map(height=500, basemap="HYBRID")
     if st.session_state['roi']:
         m.centerObject(st.session_state['roi'], 12)
         m.addLayer(ee.Image().paint(st.session_state['roi'], 2, 3), {'palette': '#00f2ff'}, 'Target ROI')
@@ -913,7 +900,7 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col_map:
-                m = geemap.Map(height=700, basemap=selected_basemap)
+                m = geemap.Map(height=700, basemap="HYBRID")
                 m.centerObject(roi, 13)
                 m.addLayer(index_img, vis_params, p['idx'])
                 m.add_colorbar(vis_params, label=p['idx'], layer_name="Legend")
@@ -926,7 +913,7 @@ else:
         
         # 1. SETUP MAP
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap=selected_basemap)
+        m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
         # S2 Background for all modes
@@ -1175,7 +1162,7 @@ else:
     # ==========================================
     elif p['mode'] == "Geospatial-embeddings-use-cases":
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap=selected_basemap)
+        m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
         target_year = int(p['embedding_year'])
@@ -1441,7 +1428,7 @@ else:
     # ==========================================
     elif p['mode'] == "Landslide Detection (SAR)":
         col_map, col_res = st.columns([3, 1])
-        m = geemap.Map(height=700, basemap=selected_basemap)
+        m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
         with st.spinner("🛰️ Calculating SAR Backscatter Changes & DEM Analysis..."):
