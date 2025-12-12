@@ -226,7 +226,6 @@ def rename_landsat_bands(img):
         ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']
     )
     # KEEP THERMAL BAND (ST_B10)
-    # We check if ST_B10 exists (it should in Collection 2 L2)
     thermal = img.select(['ST_B10'])
     return optical.addBands(thermal)
 
@@ -267,9 +266,7 @@ def compute_index(img, platform, index, formula=None):
 
 # --- STATS CALCULATION (Dynamic Stretch) ---
 def calculate_dynamic_stretch(image, roi, scale=30):
-    """Calculates 2nd and 98th percentile for optimal stretching"""
     try:
-        # Reduce region to get percentiles (avoids outliers better than Min/Max)
         stats = image.reduceRegion(
             reducer=ee.Reducer.percentile([2, 98]),
             geometry=roi,
@@ -277,8 +274,6 @@ def calculate_dynamic_stretch(image, roi, scale=30):
             maxPixels=1e9,
             bestEffort=True
         ).getInfo()
-        
-        # Keys come back as 'band_p2', 'band_p98'. We need to extract them regardless of band name
         vals = list(stats.values())
         if len(vals) >= 2:
             return min(vals), max(vals)
@@ -405,7 +400,6 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             'crs': 'EPSG:4326' 
         })
         
-        # INCREASED TIMEOUT HERE
         response = requests.get(thumb_url, timeout=120)
         
         if response.status_code != 200:
@@ -420,7 +414,6 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
         img_pil = Image.open(BytesIO(response.content))
         
         # 3. PLOT WITH DYNAMIC SIZE AND PURE BLACK BACKGROUND
-        # Ensuring pure black background so white elements pop
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300, facecolor='#000000')
         ax.set_facecolor('#000000')
         
@@ -437,9 +430,7 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             spine.set_edgecolor('white')
             spine.set_alpha(0.3)
         
-        # 4. NORTH ARROW / DIRECTION MARKER
-        # Placed Top-Right relative to Axes (0.95, 0.95)
-        # Using annotate to draw arrow and 'N' text
+        # 4. NORTH ARROW
         ax.annotate('N', xy=(0.97, 0.95), xytext=(0.97, 0.88),
                     xycoords='axes fraction', textcoords='axes fraction',
                     arrowprops=dict(facecolor='white', edgecolor='white', width=4, headwidth=12, headlength=10),
@@ -466,14 +457,12 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             
             bar_height = height_deg * 0.015
             
-            # White scale bar rectangle
             rect = mpatches.Rectangle((start_x, start_y), nice_len_deg, bar_height, 
                                     linewidth=1, edgecolor='white', facecolor='white')
             ax.add_patch(rect)
             
             label = f"{int(nice_len_met/1000)} km" if nice_len_met >= 1000 else f"{int(nice_len_met)} m"
             
-            # Text label above scale bar
             ax.text(start_x + nice_len_deg/2, start_y + bar_height + (height_deg*0.01), label, 
                     color='white', ha='center', va='bottom', fontsize=12, fontweight='bold',
                     path_effects=[PathEffects.withStroke(linewidth=2, foreground="black")])
@@ -504,7 +493,6 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white', fontsize=10)
         
         buf = BytesIO()
-        # Crucial: Save with facecolor black so text is visible outside the axes
         plt.savefig(buf, format='jpg', bbox_inches='tight', facecolor='#000000')
         buf.seek(0)
         plt.close(fig)
@@ -526,8 +514,8 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    # MODE SELECTOR
-    mode = st.radio("System Mode", ["Spectral Monitor", "LULC Classifier", "Geospatial-embeddings-use-cases", "Landslide Detection (SAR)"], index=0)
+    # MODE SELECTOR - Updated with RWH
+    mode = st.radio("System Mode", ["Spectral Monitor", "LULC Classifier", "Geospatial-embeddings-use-cases", "Landslide Detection (SAR)", "Rainwater Harvesting (RWH)"], index=0)
     st.session_state['mode'] = mode
 
     st.markdown("---")
@@ -544,16 +532,13 @@ with st.sidebar:
                 new_roi = parse_kml(kml.read())
         elif roi_method == "Point & Buffer":
             c1, c2 = st.columns([1, 1])
-            # High precision coordinates, wide range
             lat = c1.number_input("Lat", value=20.59, min_value=-90.0, max_value=90.0, format="%.6f")
             lon = c2.number_input("Lon", value=78.96, min_value=-180.0, max_value=180.0, format="%.6f")
-            # Radius in METERS now, no max limit
             rad = st.number_input("Radius (meters)", value=5000, min_value=10, step=10)
             if lat and lon: 
                 new_roi = ee.Geometry.Point([lon, lat]).buffer(rad).bounds()
         elif roi_method == "Manual Coordinates":
             c1, c2 = st.columns(2)
-            # High precision coordinates
             min_lon = c1.number_input("Min Lon", value=78.0, min_value=-180.0, max_value=180.0, format="%.6f")
             min_lat = c2.number_input("Min Lat", value=20.0, min_value=-90.0, max_value=90.0, format="%.6f")
             max_lon = c1.number_input("Max Lon", value=79.0, min_value=-180.0, max_value=180.0, format="%.6f")
@@ -570,7 +555,6 @@ with st.sidebar:
     st.markdown("---")
     
     # --- MODE SPECIFIC SETTINGS ---
-    # Init vars
     rf_trees, svm_kernel, svm_gamma, gtb_trees = 100, 'RBF', 0.5, 100
     ann_layers, ann_iter, ann_alpha = (100, 100), 500, 0.0001
     model_choice = "Random Forest"
@@ -578,6 +562,7 @@ with st.sidebar:
     embedding_task = "LULC (ESA Labels)"
     pre_start, pre_end, post_start, post_end = None, None, None, None
     slide_thresh, slope_thresh = 2.0, 15
+    w_rain, w_slope, w_lulc, w_soil = 30, 20, 30, 20 # Defaults for RWH
 
     if mode == "Spectral Monitor":
         st.markdown("### 2. Sensor Config")
@@ -588,9 +573,7 @@ with st.sidebar:
         is_optical = "Optical" in platform
         formula, orbit = "", "BOTH"
         
-        # --- SENSOR CONFIG ---
         if is_optical:
-            # ADDED LST OPTION FOR LANDSAT
             if "Landsat" in platform:
                 idx = st.selectbox("Spectral Product", ['NDVI', 'GNDVI', 'NDWI (Water)', 'NDMI', 'LST (Thermal)', '🛠️ Custom (Band Math)'])
                 if 'Custom' in idx:
@@ -610,33 +593,21 @@ with st.sidebar:
             orbit = st.radio("Pass Direction", ["DESCENDING", "ASCENDING", "BOTH"])
             cloud = 0
 
-        # --- VISUALIZATION CONTROL (Dynamic) ---
         st.markdown("### 3. Visualization Settings")
-        
         palettes = get_palettes()
         pal_name = st.selectbox("Color Palette", list(palettes.keys()), index=0)
         cur_palette = palettes[pal_name]
         
         st.caption("Value Range (Stretch)")
-        
-        # Manual Inputs linked to Session State
-        # We read from session state, defaulting to 0.0/1.0 if not yet set
         c1, c2 = st.columns(2)
-        
-        # The key logic here allows us to update these widgets from the main script
         vmin = c1.number_input("Min", value=float(st.session_state['vis_min']), key='vis_min_input')
         vmax = c2.number_input("Max", value=float(st.session_state['vis_max']), key='vis_max_input')
-        
-        # Sync: If user manually changes these widgets, update session state
         st.session_state['vis_min'] = vmin
         st.session_state['vis_max'] = vmax
-        
         st.markdown("---")
 
-    elif mode == "LULC Classifier": # LULC MODE
+    elif mode == "LULC Classifier":
         st.markdown("### 2. ML Architecture")
-        
-        # 1. Model Selector
         model_choice = st.selectbox(
             "Select Classifier", 
             [
@@ -650,7 +621,6 @@ with st.sidebar:
             ]
         )
 
-        # 2. Dynamic Hyperparameters
         if model_choice == "Google Dynamic World (Pre-trained Deep Learning)":
             st.info("🌍 Uses Google's pre-trained deep learning model (FCN) on Sentinel-2 data. 10m global resolution.")
             cloud = st.slider("Cloud Masking % (For S2 composite)", 0, 30, 20)
@@ -675,7 +645,7 @@ with st.sidebar:
             cloud = st.slider("Cloud Masking %", 0, 30, 20)
             split_ratio = st.slider("Train/Validation Split", 0.5, 0.9, 0.8)
 
-        else: # Other models
+        else:
             st.caption("Standard GEE classifiers.")
             cloud = st.slider("Cloud Masking %", 0, 30, 20)
             split_ratio = st.slider("Train/Validation Split", 0.5, 0.9, 0.8)
@@ -691,8 +661,7 @@ with st.sidebar:
         ])
         embedding_year = st.slider("Target Year", 2017, 2024, 2023)
         st.caption(f"Using Google Satellite Embeddings (V1) for {embedding_year}")
-        cloud = 0 # Embeddings don't use this directly in the same way
-        
+        cloud = 0 
         st.markdown("---")
 
     elif mode == "Landslide Detection (SAR)":
@@ -713,18 +682,30 @@ with st.sidebar:
         slide_thresh = st.slider("Backscatter Change (dB)", 1.0, 5.0, 2.5, 0.1, help="Higher value = Stricter detection (less noise)")
         slope_thresh = st.slider("Min Slope (Degrees)", 0, 30, 15, help="Exclude flat areas (agri fields)")
         cloud = 0
-        
         st.markdown("---")
 
-    # Common Temporal Window (Only for non-SAR/Embeddings modes)
-    if mode not in ["Geospatial-embeddings-use-cases", "Landslide Detection (SAR)"]:
+    elif mode == "Rainwater Harvesting (RWH)":
+        st.markdown("### 2. MCDA Weights")
+        st.caption("Multi-Criteria Decision Analysis")
+        w_rain = st.slider("Rainfall Weight (%)", 0, 100, 30)
+        w_slope = st.slider("Slope Weight (%)", 0, 100, 20)
+        w_lulc = st.slider("Land Use Weight (%)", 0, 100, 30)
+        w_soil = st.slider("Soil Weight (%)", 0, 100, 20)
+        
+        total = w_rain + w_slope + w_lulc + w_soil
+        if total != 100:
+            st.warning(f"⚠️ Total weight: {total}%. It should ideally be 100%.")
+        
+        cloud = 0
         st.markdown("---")
+
+    # Common Temporal Window (Only for relevant modes)
+    if mode not in ["Geospatial-embeddings-use-cases", "Landslide Detection (SAR)"]:
         st.markdown("### 3. Temporal Window")
         c1, c2 = st.columns(2)
         start = c1.date_input("Start", datetime.now()-timedelta(60))
         end = c2.date_input("End", datetime.now())
     else:
-        # Dummy vars for consistency
         start, end = datetime.now(), datetime.now()
 
     st.markdown("###")
@@ -750,6 +731,15 @@ with st.sidebar:
                     'slide_thresh': slide_thresh,
                     'slope_thresh': slope_thresh
                 })
+            elif mode == "Rainwater Harvesting (RWH)":
+                params.update({
+                    'start': start.strftime("%Y-%m-%d"),
+                    'end': end.strftime("%Y-%m-%d"),
+                    'w_rain': w_rain/100.0,
+                    'w_slope': w_slope/100.0,
+                    'w_lulc': w_lulc/100.0,
+                    'w_soil': w_soil/100.0
+                })
             elif mode != "Geospatial-embeddings-use-cases":
                 params.update({
                     'start': start.strftime("%Y-%m-%d"), 
@@ -768,7 +758,6 @@ with st.sidebar:
                 params.update({
                     'platform': platform, 'idx': idx, 'formula': formula, 
                     'orbit': orbit, 'palette': cur_palette
-                    # Note: vmin/vmax are pulled from session state dynamically in the main loop
                 })
                 
             st.session_state.update(params)
@@ -791,14 +780,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if not st.session_state['calculated']:
-    # Welcome View
     st.markdown("""
     <div class="glass-card" style="text-align:center; padding:40px;">
         <h2 style="color:#fff;">📡 WAITING FOR INPUT</h2>
         <p style="color:#94a3b8; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
     </div>
     """, unsafe_allow_html=True)
-    # FORCED GOOGLE HYBRID
     m = geemap.Map(height=500, basemap="HYBRID")
     if st.session_state['roi']:
         m.centerObject(st.session_state['roi'], 12)
@@ -855,36 +842,24 @@ else:
                 d_s = sel_date
                 d_e = (datetime.strptime(sel_date, "%Y-%m-%d") + timedelta(1)).strftime("%Y-%m-%d")
                 
-                # Fetch Base Image (Mosaic for the day)
                 base_img = processed.filterDate(d_s, d_e).mosaic().clip(roi)
-                
-                # Calculate Index
                 index_img = compute_index(base_img, p['platform'], p['idx'], p['formula'])
                 
-                # --- AUTO-CALCULATION LOGIC ---
-                # We construct a unique key for the current configuration (Index + Date + ROI)
-                # If this changes, we calculate new Stats (p2, p98) and update the session state
-                
-                roi_hash = str(roi.getInfo()) # ROI might change slightly
+                # Auto-Calc Stretch
+                roi_hash = str(roi.getInfo()) 
                 current_calc_key = f"{p['idx']}_{sel_date}_{roi_hash}"
                 
                 if st.session_state.get('last_calc_key') != current_calc_key:
                     with st.spinner("📏 Calculating dynamic stretch based on ROI statistics..."):
                         p2, p98 = calculate_dynamic_stretch(index_img, roi)
-                        
-                        # Update the SESSION STATE directly
                         st.session_state['vis_min'] = p2
                         st.session_state['vis_max'] = p98
                         st.session_state['last_calc_key'] = current_calc_key
-                        
-                        # RERUN to update the sidebar widgets with these new values
                         st.rerun()
 
-                # --- STATISTICS CARD ---
                 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
                 st.markdown(f'<div class="card-label">📊 STATISTICAL ANALYSIS ({p["idx"]})</div>', unsafe_allow_html=True)
                 with st.spinner("Calculating display stats..."):
-                    # This calculates Mean/Std/Min/Max for display (different from the p2/p98 stretch)
                     stats = calculate_roi_stats_display(index_img, roi)
                     if stats:
                         c_s1, c_s2 = st.columns(2)
@@ -896,10 +871,8 @@ else:
                         st.warning("Stats unavailable")
                 st.markdown('</div>', unsafe_allow_html=True)
 
-                # --- LAYER PREPARATION ---
                 vis_params = {'min': st.session_state['vis_min'], 'max': st.session_state['vis_max'], 'palette': p['palette']}
                 
-                # --- DOWNLOAD & MAP ---
                 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
                 st.markdown('<div class="card-label">💾 DATA EXPORT</div>', unsafe_allow_html=True)
                 try:
@@ -920,7 +893,6 @@ else:
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col_map:
-                # FORCED GOOGLE HYBRID
                 m = geemap.Map(height=700, basemap="HYBRID")
                 m.centerObject(roi, 13)
                 m.addLayer(index_img, vis_params, p['idx'])
@@ -931,14 +903,10 @@ else:
     # MODE 2: MULTI-MODEL LULC CLASSIFIER
     # ==========================================
     elif p['mode'] == "LULC Classifier":
-        
-        # 1. SETUP MAP
         col_map, col_res = st.columns([3, 1])
-        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
-        # S2 Background for all modes
         s2_collection = (
             ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
             .filterBounds(roi)
@@ -953,11 +921,8 @@ else:
         else:
             st.warning("No clear Sentinel-2 background available.")
 
-        # --- BRANCH A: PRE-TRAINED DEEP LEARNING (DYNAMIC WORLD) ---
         if p['model_choice'] == "Google Dynamic World (Pre-trained Deep Learning)":
             with st.spinner("🧠 Querying Google Dynamic World V1 (Deep Learning)..."):
-                
-                # Filter DW Collection
                 dw_col = ee.ImageCollection("GOOGLE/DYNAMICWORLD/V1") \
                     .filterBounds(roi) \
                     .filterDate(p['start'], p['end'])
@@ -966,11 +931,7 @@ else:
                     st.error("No Dynamic World data found for this date/region.")
                     st.stop()
                     
-                # Create Composite (Mode of labels)
-                # The 'label' band contains the class index with highest probability
                 dw_image = dw_col.select('label').mode().clip(roi)
-                
-                # DW Specific Visualization
                 dw_vis = {
                     "min": 0, "max": 8,
                     "palette": [
@@ -978,14 +939,12 @@ else:
                         '#dfc35a', '#c4281b', '#a59b8f', '#b39fe1'
                     ]
                 }
-                
                 dw_names = ['Water', 'Trees', 'Grass', 'Flooded Veg', 'Crops', 
                             'Shrub/Scrub', 'Built', 'Bare', 'Snow/Ice']
                 
                 m.addLayer(dw_image, dw_vis, "Dynamic World LULC")
                 m.add_legend(title="Dynamic World Classes", legend_dict=dict(zip(dw_names, dw_vis['palette'])))
                 
-                # Metrics Display (N/A for Pre-trained)
                 with col_res:
                     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
                     st.markdown('<div class="card-label">🧠 MODEL METRICS</div>', unsafe_allow_html=True)
@@ -1007,10 +966,7 @@ else:
                         st.toast("Export Started to GDrive")
                     
                     st.markdown("---")
-                    
-                    # USER INPUT FOR MAP TITLE
                     map_title = st.text_input("Map Title", "Dynamic World LULC Analysis")
-                    
                     if st.button("📷 Render Map (JPG)"):
                         with st.spinner("Generating Map..."):
                             buf = generate_static_map_display(
@@ -1021,15 +977,11 @@ else:
                                 st.download_button("⬇️ Save Image", buf, "Ni30_DW_LULC.jpg", "image/jpeg", use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- BRANCH B: CUSTOM TRAINING (ANN, RF, SVM) ---
         else:
             TRAIN_URL = "https://raw.githubusercontent.com/nitesh4004/Geospatial-Ni30/main/sentinel2_lulc_synthetic.csv"
-            
             with st.spinner(f"🧠 Training {p['model_choice']}..."):
                 try:
                     df = pd.read_csv(TRAIN_URL)
-                    
-                    # Feature Engineering
                     df['B2'] = df['B2'] / 10000.0
                     df['B3'] = df['B3'] / 10000.0
                     df['B4'] = df['B4'] / 10000.0
@@ -1051,9 +1003,7 @@ else:
                     df = df.dropna(subset=["class_val"])
                     input_bands = ["NDVI", "EVI", "GNDVI", "NDWI", "NDMI"]
                     
-                    # --- MODEL TRAINING ---
                     if p['model_choice'] == "Artificial Neural Network (MLP)":
-                        # LOCAL ANN TRAINING
                         X = df[input_bands].values
                         y = df['class_val'].values.astype(int)
                         
@@ -1075,7 +1025,6 @@ else:
                         kappa = cohen_kappa_score(y_test, y_pred)
                         
                         proxy_name = "Visual Proxy (Random Forest)"
-                        # Train proxy for map
                         features = []
                         for i, row in df.iterrows():
                              features.append(ee.Feature(None, {
@@ -1086,7 +1035,6 @@ else:
                         trained_classifier = ee.Classifier.smileRandomForest(100).train(fc_raw, "class", input_bands)
 
                     else:
-                        # GEE NATIVE MODELS
                         features = []
                         for i, row in df.iterrows():
                             features.append(ee.Feature(None, {
@@ -1122,19 +1070,16 @@ else:
                     st.error(f"❌ Processing Error: {e}")
                     st.stop()
                 
-                # Classify Map
                 if s2_collection.size().getInfo() > 0:
                     indices_img = add_lulc_indices(s2_median)
                     lulc_class = indices_img.select(input_bands).classify(trained_classifier)
                     
-                    # Vis
                     lulc_palette = ['#0000FF', '#006400', '#b2df8a', '#FF0000', '#8B4513', '#808080']
                     vis_params = {"min": 0, "max": 5, "palette": lulc_palette}
                     
                     m.addLayer(lulc_class, vis_params, f"LULC: {proxy_name}")
                     m.add_legend(title="LULC Classes", legend_dict=dict(zip(class_names, lulc_palette)))
                     
-                    # Metrics Display
                     with col_res:
                         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
                         st.markdown('<div class="card-label">🧠 MODEL METRICS</div>', unsafe_allow_html=True)
@@ -1160,8 +1105,6 @@ else:
                             st.toast("Export Started")
 
                         st.markdown("---")
-                        
-                        # USER INPUT FOR MAP TITLE
                         map_title = st.text_input("Map Title", "LULC Classification Analysis")
                         
                         if st.button("📷 Render Map (JPG)"):
@@ -1184,14 +1127,10 @@ else:
     # ==========================================
     elif p['mode'] == "Geospatial-embeddings-use-cases":
         col_map, col_res = st.columns([3, 1])
-        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
         target_year = int(p['embedding_year'])
-        
-        # Load Google Satellite Embeddings
-        # V1/ANNUAL has embeddings for each year
         embeddings_col = ee.ImageCollection('GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL') \
             .filterDate(f'{target_year}-01-01', f'{target_year+1}-01-01') \
             .filterBounds(roi)
@@ -1201,38 +1140,23 @@ else:
              st.stop()
              
         embeddings = embeddings_col.mosaic().clip(roi)
-        
-        # Helper to visualize embeddings (RGB using PCA-like bands)
-        # Bands are A00 to A63. We can just visualize A00, A01, A02
         emb_vis = {'min': -0.1, 'max': 0.1, 'bands': ['A00', 'A01', 'A02']}
         m.addLayer(embeddings, emb_vis, f'Alpha Earth RGB {target_year}')
 
         if p['embedding_task'] == "LULC (Supervised with ESA Labels)":
              with st.spinner("Generating LULC from Embeddings (ESA Ground Truth)..."):
-                # 1. Get Ground Truth (ESA WorldCover 2021 - closest available)
-                # ESA WorldCover 2021 is used as reference for training the embeddings
                 esa = ee.Image('ESA/WorldCover/v200/2021').clip(roi)
-                
-                # 2. Prepare Training Data
-                # We use the embeddings + ESA label to train a classifier
-                # Then classify the current year's embeddings
-                
-                # Sample pixels
-                sample_scale = 20 # Embeddings are coarser than S2
+                sample_scale = 20 
                 num_points = 1000
                 
-                # Use the 2021 embeddings for training (to match ESA 2021 labels)
                 emb_2021_col = ee.ImageCollection('GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL') \
                     .filterDate('2021-01-01', '2022-01-01') \
                     .filterBounds(roi)
                 
                 if emb_2021_col.size().getInfo() > 0:
                     emb_2021 = emb_2021_col.mosaic().clip(roi)
-                    
-                    # Stack embeddings and label
                     train_image = emb_2021.addBands(esa.rename('label'))
                     
-                    # Stratified Sample
                     points = train_image.stratifiedSample(
                         numPoints=num_points,
                         classBand='label',
@@ -1241,8 +1165,6 @@ else:
                         geometries=True
                     )
                     
-                    # Train RF
-                    # Embeddings bands are A00..A63
                     band_names = embeddings.bandNames()
                     classifier = ee.Classifier.smileRandomForest(100).train(
                         features=points,
@@ -1250,19 +1172,13 @@ else:
                         inputProperties=band_names
                     )
                     
-                    # Classify Target Year Embeddings
                     classified = embeddings.classify(classifier)
                     
-                    # Visualization (ESA Palette)
-                    # ESA classes: 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100
-                    
-                    # Map specific ESA classes to colors
                     class_values = [10, 20, 30, 40, 50, 60, 80, 90, 95, 100]
                     class_names_esa = ['Trees', 'Shrubland', 'Grassland', 'Cropland', 'Built-up', 'Bare/Sparse', 'Water', 'Herbaceous Wetland', 'Mangroves', 'Moss/Lichen']
                     class_colors = ['#006400', '#ffbb22', '#ffff4c', '#f096ff', '#fa0000', 
                                     '#b4b4b4', '#0064c8', '#0096a0', '#00cf75', '#fae6a0']
                     
-                    # Filter classified image to only valid classes and visualize
                     remapped = classified.remap(class_values, list(range(len(class_values))))
                     vis_remap = {'min': 0, 'max': len(class_values)-1, 'palette': class_colors}
                     
@@ -1276,7 +1192,6 @@ else:
                           
                           st.markdown('<div class="card-label">📊 AREA STATS</div>', unsafe_allow_html=True)
                           with st.spinner("Calculating areas..."):
-                               # Note: we use 'remapped' here so the indices 0-9 match 'class_names_esa'
                                df_area = calculate_area_by_class(remapped, roi, 20, class_names_esa)
                                if not df_area.empty:
                                    st.dataframe(df_area, hide_index=True, use_container_width=True)
@@ -1289,8 +1204,6 @@ else:
                             st.toast("Export task started")
                           
                           st.markdown("---")
-                          
-                          # USER INPUT FOR MAP TITLE
                           map_title = st.text_input("Map Title", f"LULC Embeddings {target_year}")
 
                           if st.button("📷 Render Map (JPG)"):
@@ -1307,23 +1220,15 @@ else:
                     st.error("Training data (2021 Embeddings) missing.")
 
         elif p['embedding_task'] == "Alpha Earth: Transfer Learning (Dynamic World)":
-            # NEW MODE
             with st.spinner("Training Alpha Earth Embeddings on Dynamic World Labels..."):
-                # 1. Load Dynamic World Labels for the SAME YEAR as embeddings
-                # This makes it better than ESA for multi-year analysis
                 dw_col = ee.ImageCollection("GOOGLE/DYNAMICWORLD/V1") \
                     .filterDate(f'{target_year}-01-01', f'{target_year+1}-01-01') \
                     .filterBounds(roi)
 
                 if dw_col.size().getInfo() > 0:
-                    # Get the most common class for the year (label band)
                     dw_label = dw_col.select('label').mode().clip(roi)
-                    
-                    # 2. Combine Embeddings (Features) with DW (Labels)
                     training_image = embeddings.addBands(dw_label.rename('label'))
                     
-                    # 3. Sample points
-                    # Stratified sampling ensures we get examples of all classes present
                     points = training_image.stratifiedSample(
                         numPoints=1000,
                         classBand='label',
@@ -1332,7 +1237,6 @@ else:
                         geometries=True
                     )
                     
-                    # 4. Train Classifier
                     band_names = embeddings.bandNames()
                     classifier = ee.Classifier.smileRandomForest(50).train(
                         features=points,
@@ -1340,10 +1244,8 @@ else:
                         inputProperties=band_names
                     )
                     
-                    # 5. Classify
                     classified_dw = embeddings.classify(classifier)
                     
-                    # 6. Visualization (Dynamic World Palette)
                     dw_names = ['Water', 'Trees', 'Grass', 'Flooded Veg', 'Crops', 
                                 'Shrub/Scrub', 'Built', 'Bare', 'Snow/Ice']
                     dw_vis = {
@@ -1354,7 +1256,7 @@ else:
                         ]
                     }
                     
-                    m.addLayer(dw_label, dw_vis, "Dynamic World (Raw)", False) # Hidden by default
+                    m.addLayer(dw_label, dw_vis, "Dynamic World (Raw)", False) 
                     m.addLayer(classified_dw, dw_vis, f"Alpha Earth LULC {target_year}")
                     m.add_legend(title="Alpha Earth Classes", legend_dict=dict(zip(dw_names, dw_vis['palette'])))
 
@@ -1394,25 +1296,16 @@ else:
                 else:
                     st.error(f"No Dynamic World labels found for {target_year} to train the embeddings.")
 
-
         elif p['embedding_task'] == "Water/Change Detection (Unsupervised)":
             with st.spinner("Running Unsupervised Clustering on Embeddings..."):
-                # Use KMeans clustering on the embeddings
-                # This groups pixels with similar spectral/textural properties
-                
-                # 1. Sample for training clusterer
                 sample_points = embeddings.sample(
                     region=roi, scale=50, numPixels=2000
                 )
                 
-                # 2. Clusterer (KMeans)
                 n_clusters = 5
                 clusterer = ee.Clusterer.wekaKMeans(n_clusters).train(sample_points)
-                
-                # 3. Cluster Result
                 result = embeddings.cluster(clusterer)
                 
-                # Vis
                 cluster_vis = {'min': 0, 'max': n_clusters-1, 'palette': ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff']}
                 m.addLayer(result.randomVisualizer(), {}, f"Clusters {target_year}")
                 
@@ -1430,14 +1323,13 @@ else:
                     
                     st.markdown("---")
                     
-                    # USER INPUT FOR MAP TITLE
                     map_title = st.text_input("Map Title", f"Clustering Analysis {target_year}")
 
                     if st.button("📷 Render Map (JPG)"):
                              with st.spinner("Generating Map..."):
                                  buf = generate_static_map_display(
                                      result, roi, cluster_vis, map_title, 
-                                     is_categorical=False # Clusters are cat, but random colors make legend hard
+                                     is_categorical=False 
                                  )
                                  if buf:
                                      st.download_button("⬇️ Save Image", buf, "Ni30_Clusters.jpg", "image/jpeg", use_container_width=True)
@@ -1451,12 +1343,10 @@ else:
     # ==========================================
     elif p['mode'] == "Landslide Detection (SAR)":
         col_map, col_res = st.columns([3, 1])
-        # FORCED GOOGLE HYBRID
         m = geemap.Map(height=700, basemap="HYBRID")
         m.centerObject(roi, 13)
         
         with st.spinner("🛰️ Calculating SAR Backscatter Changes & DEM Analysis..."):
-            # 1. Get S1 Collections for Pre and Post
             def get_s1_processed(start_d, end_d, roi_geom):
                 col = ee.ImageCollection('COPERNICUS/S1_GRD') \
                     .filterDate(start_d, end_d) \
@@ -1465,47 +1355,30 @@ else:
                     .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')) \
                     .filter(ee.Filter.eq('instrumentMode', 'IW'))
                 
-                # Mosaic and Apply Speckle Filter (Boxcar)
-                # Using VV polarization as it's often more sensitive to surface roughness changes in landslides
                 img = col.select('VV').mosaic().clip(roi_geom)
                 return img.focal_median(50, 'circle', 'meters')
 
             pre_img = get_s1_processed(p['pre_start'], p['pre_end'], roi)
             post_img = get_s1_processed(p['post_start'], p['post_end'], roi)
             
-            # Check if images exist
             try:
-                # Force a check
                 info_check = pre_img.getInfo()
             except:
                 st.error("No Sentinel-1 Imagery found for the selected Pre-Event dates.")
                 st.stop()
 
-            # 2. Calculate Difference (Log Ratio / dB Difference)
-            # Sentinel-1 GRD is often provided in linear scale by default in some GEE contexts, 
-            # but usually usually pre-processed to dB. If linear, log ratio. If dB, subtraction.
-            # Assuming standard GEE S1 GRD which is sigma0.
-            
-            # Convert to dB for consistent math: 10*log10(x)
             pre_db = ee.Image(10).multiply(pre_img.log10())
             post_db = ee.Image(10).multiply(post_img.log10())
             
             diff = post_db.subtract(pre_db).abs()
             
-            # 3. Terrain Masking (Slope)
-            # Landslides typically occur on slopes > 10-15 degrees.
-            # Use NASA DEM (Global) or SRTM
             dem = ee.Image('NASA/NASADEM_HGT/001').select('elevation')
             slope = ee.Terrain.slope(dem).clip(roi)
             
-            # Mask: Significant Change AND Significant Slope
-            # Landslides usually increase roughness (brighter) or remove veg (darker/brighter depending on moisture)
-            # We look for high absolute change.
             slide_mask = diff.gt(p['slide_thresh']).And(slope.gt(p['slope_thresh']))
             
             detected_slides = diff.updateMask(slide_mask)
             
-            # 4. Visualization
             m.addLayer(pre_db, {'min': -25, 'max': 0}, 'Pre-Event (dB)', False)
             m.addLayer(post_db, {'min': -25, 'max': 0}, 'Post-Event (dB)', False)
             m.addLayer(slope, {'min': 0, 'max': 60, 'palette': ['white', 'black']}, 'Slope Map', False)
@@ -1513,7 +1386,6 @@ else:
             slide_vis = {'palette': ['red']}
             m.addLayer(detected_slides, slide_vis, '⚠️ Potential Landslides')
             
-            # 5. Calculate Affected Area
             area_img = ee.Image.pixelArea().updateMask(slide_mask)
             stats = area_img.reduceRegion(
                 reducer=ee.Reducer.sum(),
@@ -1552,7 +1424,6 @@ else:
                 
                 st.markdown("---")
                 
-                # USER INPUT FOR MAP TITLE
                 map_title = st.text_input("Map Title", "Landslide Event Analysis")
 
                 if st.button("📷 Save Map Report"):
@@ -1562,6 +1433,136 @@ else:
                      )
                      if buf:
                          st.download_button("⬇️ Save Image", buf, "Ni30_Landslide.jpg", "image/jpeg", use_container_width=True)
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        with col_map:
+            m.to_streamlit()
+
+    # ==========================================
+    # MODE 5: RAINWATER HARVESTING (RWH)
+    # ==========================================
+    elif p['mode'] == "Rainwater Harvesting (RWH)":
+        col_map, col_res = st.columns([3, 1])
+        m = geemap.Map(height=700, basemap="HYBRID")
+        m.centerObject(roi, 13)
+
+        with st.spinner("🌧️ Performing MCDA for Rainwater Harvesting..."):
+            # 1. RAINFALL (CHIRPS)
+            rain_dataset = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD") \
+                .filterDate(p['start'], p['end']) \
+                .select('precipitation')
+            
+            if rain_dataset.size().getInfo() > 0:
+                rain_mean = rain_dataset.mean().clip(roi)
+                # Normalize Rainfall (0 to 1): Higher rainfall = Higher suitability
+                min_rain = 50  # mm
+                max_rain = 800 # mm
+                rain_norm = rain_mean.clamp(min_rain, max_rain).unitScale(min_rain, max_rain)
+            else:
+                st.warning("Rainfall data unavailable for range. Using global mean placeholder.")
+                rain_norm = ee.Image(0.5).clip(roi)
+                rain_mean = rain_norm
+
+            # 2. SLOPE (NASA DEM)
+            dem = ee.Image("NASA/NASADEM_HGT/001").select('elevation')
+            slope = ee.Terrain.slope(dem).clip(roi)
+            # Normalize Slope: Lower slope (0-5%) is better for harvesting.
+            # We invert the scale: 0 deg = 1 (Best), 30 deg = 0 (Worst)
+            slope_norm = slope.clamp(0, 30).unitScale(0, 30)
+            slope_score = ee.Image(1).subtract(slope_norm) 
+
+            # 3. LULC (ESA WorldCover)
+            lulc = ee.Image("ESA/WorldCover/v100/2020").select('Map').clip(roi)
+            # Remap classes to suitability score (0 to 1)
+            # Bare (60), Grass (30), Shrub (20) -> High suitability (0.9 - 1.0)
+            # Built-up (50), Water (80) -> Low/Restricted (0.0)
+            from_list = [10, 20, 30, 40, 50, 60, 80, 90, 95, 100]
+            to_list   = [0.6, 0.8, 0.8, 0.7, 0.0, 1.0, 0.0, 0.1, 0.1, 0.1]
+            lulc_score = lulc.remap(from_list, to_list).rename('lulc_score')
+
+            # 4. SOIL (OpenLandMap)
+            # Using Texture Class/Clay Content. We generally prefer Loam/Clay for retention.
+            try:
+                soil_clay = ee.Image("OpenLandMap/SOL/SOL_CLAY-WFRACTION_USDA-3A1A1A_M/v02").select('b0').mean().clip(roi)
+                # Normalize Clay: More clay (up to a point) retains water better.
+                soil_score = soil_clay.clamp(0, 50).unitScale(0, 50)
+            except:
+                soil_score = ee.Image(0.5).clip(roi)
+
+            # 5. WEIGHTED OVERLAY
+            suitability = (rain_norm.multiply(p['w_rain'])) \
+                .add(slope_score.multiply(p['w_slope'])) \
+                .add(lulc_score.multiply(p['w_lulc'])) \
+                .add(soil_score.multiply(p['w_soil']))
+
+            # VISUALIZATION
+            vis_params = {
+                'min': 0,
+                'max': 0.8, 
+                'palette': ['red', 'orange', 'yellow', 'lightgreen', 'darkgreen'] 
+            }
+            
+            m.addLayer(rain_mean, {'min': 0, 'max': 200, 'palette': ['blue', 'purple']}, 'Rainfall (Raw)', False)
+            m.addLayer(slope, {'min': 0, 'max': 30, 'palette': ['white', 'black']}, 'Slope (Raw)', False)
+            m.addLayer(suitability, vis_params, 'RWH Suitability Index')
+
+            legend_dict = {
+                "Very High Suitability": "006400", 
+                "High Suitability": "90EE90",      
+                "Moderate Suitability": "FFFF00",  
+                "Low Suitability": "FFA500",       
+                "Unsuitable": "FF0000"             
+            }
+            m.add_legend(title="RWH Suitability", legend_dict=legend_dict)
+
+            with col_res:
+                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+                st.markdown('<div class="card-label">🌧️ RWH ANALYTICS</div>', unsafe_allow_html=True)
+                
+                # Classify the continuous score into 5 classes for area calculation
+                # 0-0.2: Unsuitable (1), 0.2-0.4: Low (2), 0.4-0.6: Mod (3), 0.6-0.8: High (4), >0.8: Very High (5)
+                suit_class = ee.Image(0).where(suitability.lt(0.2), 1) \
+                    .where(suitability.gte(0.2).And(suitability.lt(0.4)), 2) \
+                    .where(suitability.gte(0.4).And(suitability.lt(0.6)), 3) \
+                    .where(suitability.gte(0.6).And(suitability.lt(0.8)), 4) \
+                    .where(suitability.gte(0.8), 5).clip(roi)
+                
+                class_names = ["Unsuitable", "Low", "Moderate", "High", "Very High"]
+                
+                st.markdown('<div class="card-label">📊 SUITABLE AREA</div>', unsafe_allow_html=True)
+                with st.spinner("Calculating potential area..."):
+                    # We pass 'suit_class' which has integer values 1-5. 
+                    # calculate_area_by_class expects 0-indexed usually, but handles mapping if we align names.
+                    # The function calculates based on unique values found.
+                    # We will create a custom display here.
+                    df_area = calculate_area_by_class(suit_class, roi, 30)
+                    
+                    # Manually map our 1-5 classes to names for display
+                    if not df_area.empty:
+                        # Map Class 1->Unsuitable, etc.
+                        name_map = {"Class 1": "Unsuitable", "Class 2": "Low", "Class 3": "Moderate", "Class 4": "High", "Class 5": "Very High"}
+                        df_area['Class'] = df_area['Class'].map(name_map).fillna(df_area['Class'])
+                        st.dataframe(df_area, hide_index=True, use_container_width=True)
+
+                st.markdown("---")
+                if st.button("☁️ Export Suitability Map"):
+                     ee.batch.Export.image.toDrive(
+                        image=suitability, description=f"RWH_Suitability_{datetime.now().strftime('%Y%m%d')}", 
+                        scale=30, region=roi, folder='GEE_Exports'
+                    ).start()
+                     st.toast("Export started")
+                
+                st.markdown("---")
+                map_title = st.text_input("Map Title", "RWH Site Suitability")
+                if st.button("📷 Render Map (JPG)"):
+                     with st.spinner("Generating Map..."):
+                         buf = generate_static_map_display(
+                             suitability, roi, vis_params, map_title, 
+                             cmap_colors=vis_params['palette']
+                         )
+                         if buf:
+                             st.download_button("⬇️ Save Image", buf, "Ni30_RWH.jpg", "image/jpeg", use_container_width=True)
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
