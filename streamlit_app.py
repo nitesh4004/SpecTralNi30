@@ -28,51 +28,65 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. ADVANCED CSS STYLING (Cyber-Glass UI) ---
+# --- 2. ADVANCED CSS STYLING (Scientific Light UI) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Inter:wght@300;400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
     
     /* GLOBAL VARIABLES */
     :root {
-        --bg-color: #050509;
-        --card-bg: rgba(20, 24, 35, 0.7);
-        --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-        --accent-primary: #00f2ff;
-        --accent-secondary: #7000ff;
-        --text-primary: #e2e8f0;
+        --bg-color: #ffffff;
+        --card-bg: #f8f9fa; /* Light Gray for cards */
+        --glass-border: 1px solid #e0e0e0;
+        --accent-primary: #002D62; /* Oxford Blue */
+        --accent-secondary: #0066b2; /* Lighter Blue */
+        --text-primary: #1a202c; /* Near Black */
+        --text-header: #002D62; /* Dark Blue for Headers */
     }
 
     /* BACKGROUND */
     .stApp { 
-        background-image: radial-gradient(circle at 50% 0%, #1a1f35 0%, #050509 100%);
+        background-color: var(--bg-color);
         font-family: 'Inter', sans-serif;
     }
 
     /* TYPOGRAPHY */
-    h1, h2, h3, .title-font { font-family: 'Rajdhani', sans-serif !important; text-transform: uppercase; letter-spacing: 1px; }
-    p, label, .stMarkdown, div { color: var(--text-primary) !important; }
+    h1, h2, h3, .title-font { 
+        font-family: 'Rajdhani', sans-serif !important; 
+        text-transform: uppercase; 
+        letter-spacing: 0.5px;
+        color: var(--text-header) !important;
+    }
+    
+    p, label, .stMarkdown, div, span { 
+        color: var(--text-primary) !important; 
+    }
 
     /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
-        background-color: rgba(10, 12, 16, 0.9);
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
+        background-color: #f0f2f6; /* Very light gray */
+        border-right: 1px solid #d1d5db;
     }
     
     /* WIDGET STYLING */
     .stTextInput > div > div, .stNumberInput > div > div, .stSelectbox > div > div, .stDateInput > div > div {
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 4px;
-        color: #fff !important;
+        color: #000000 !important;
+    }
+    
+    /* Widget Labels */
+    .stSelectbox label, .stTextInput label, .stNumberInput label, .stDateInput label, .stSlider label, .stRadio label {
+        color: #002D62 !important;
+        font-weight: 600;
     }
     
     /* BUTTONS */
     div.stButton > button:first-child {
-        background: linear-gradient(90deg, var(--accent-secondary) 0%, #4c1d95 100%);
+        background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
         border: none;
-        color: white;
+        color: white !important;
         font-family: 'Rajdhani', sans-serif;
         font-weight: 700;
         letter-spacing: 1px;
@@ -81,7 +95,10 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(112, 0, 255, 0.4);
+        box-shadow: 0 4px 10px rgba(0, 45, 98, 0.3);
+    }
+    div.stButton > button:first-child p {
+        color: white !important;
     }
 
     /* CUSTOM HUD HEADER */
@@ -89,24 +106,22 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: rgba(255, 255, 255, 0.02);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: #ffffff;
+        border-bottom: 2px solid #002D62;
         padding: 15px 25px;
-        border-radius: 0 0 15px 15px;
         margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .hud-title {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 1.8rem;
+        font-size: 2.0rem;
         font-weight: 700;
-        background: -webkit-linear-gradient(0deg, #fff, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: var(--accent-primary);
     }
     .hud-badge {
-        background: rgba(0, 242, 255, 0.1);
-        border: 1px solid rgba(0, 242, 255, 0.3);
-        color: var(--accent-primary);
+        background: rgba(0, 45, 98, 0.1);
+        border: 1px solid var(--accent-primary);
+        color: var(--accent-primary) !important;
         padding: 4px 10px;
         border-radius: 4px;
         font-size: 0.7rem;
@@ -114,31 +129,32 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* GLASS CARDS */
+    /* GLASS CARDS (Now clean cards) */
     .glass-card {
         background: var(--card-bg);
         border: var(--glass-border);
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 8px;
         margin-bottom: 15px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
     .card-label {
         font-family: 'Rajdhani', sans-serif;
-        color: var(--accent-primary);
-        font-size: 0.9rem;
+        color: var(--accent-primary) !important;
+        font-size: 1.0rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 2px solid rgba(0, 45, 98, 0.1);
         padding-bottom: 5px;
     }
     
     /* MAP CONTAINER */
     iframe {
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     /* METRIC VALUE STYLING */
@@ -146,11 +162,11 @@ st.markdown("""
         font-family: 'Rajdhani', sans-serif;
         font-size: 1.5rem;
         font-weight: 700;
-        color: #fff;
+        color: #000000 !important;
     }
     .metric-sub {
         font-size: 0.8rem;
-        color: #94a3b8;
+        color: #4a5568 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -226,7 +242,6 @@ def rename_landsat_bands(img):
         ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']
     )
     # KEEP THERMAL BAND (ST_B10)
-    # We check if ST_B10 exists (it should in Collection 2 L2)
     thermal = img.select(['ST_B10'])
     return optical.addBands(thermal)
 
@@ -246,7 +261,6 @@ def compute_index(img, platform, index, formula=None):
     elif "Landsat" in platform:
         if index == 'LST (Thermal)':
             # Convert Kelvin to Celsius: K - 273.15
-            # ST_B10 is already in Kelvin from preprocess_landsat
             return img.select('ST_B10').subtract(273.15).rename('LST')
 
         if index == '🛠️ Custom (Band Math)':
@@ -269,7 +283,6 @@ def compute_index(img, platform, index, formula=None):
 def calculate_dynamic_stretch(image, roi, scale=30):
     """Calculates 2nd and 98th percentile for optimal stretching"""
     try:
-        # Reduce region to get percentiles (avoids outliers better than Min/Max)
         stats = image.reduceRegion(
             reducer=ee.Reducer.percentile([2, 98]),
             geometry=roi,
@@ -278,7 +291,6 @@ def calculate_dynamic_stretch(image, roi, scale=30):
             bestEffort=True
         ).getInfo()
         
-        # Keys come back as 'band_p2', 'band_p98'. We need to extract them regardless of band name
         vals = list(stats.values())
         if len(vals) >= 2:
             return min(vals), max(vals)
@@ -405,7 +417,6 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             'crs': 'EPSG:4326' 
         })
         
-        # INCREASED TIMEOUT HERE
         response = requests.get(thumb_url, timeout=120)
         
         if response.status_code != 200:
@@ -419,32 +430,29 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
 
         img_pil = Image.open(BytesIO(response.content))
         
-        # 3. PLOT WITH DYNAMIC SIZE AND PURE BLACK BACKGROUND
-        # Ensuring pure black background so white elements pop
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300, facecolor='#000000')
-        ax.set_facecolor('#000000')
+        # 3. PLOT WITH WHITE BACKGROUND AND BLACK TEXT
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300, facecolor='#ffffff')
+        ax.set_facecolor('#ffffff')
         
         extent = [min_lon, max_lon, min_lat, max_lat]
         
         im = ax.imshow(img_pil, extent=extent, aspect='auto')
         
-        ax.set_title(title, fontsize=18, fontweight='bold', pad=20, color='#00f2ff')
+        # Dark Blue Title
+        ax.set_title(title, fontsize=18, fontweight='bold', pad=20, color='#002D62')
         
-        # Styling ticks for black background
-        ax.tick_params(colors='white', labelcolor='white', labelsize=10)
-        ax.grid(color='white', linestyle='--', linewidth=0.5, alpha=0.2)
+        # Styling ticks for White background (Black text)
+        ax.tick_params(colors='black', labelcolor='black', labelsize=10)
+        ax.grid(color='black', linestyle='--', linewidth=0.5, alpha=0.1)
         for spine in ax.spines.values():
-            spine.set_edgecolor('white')
-            spine.set_alpha(0.3)
+            spine.set_edgecolor('black')
+            spine.set_linewidth(1)
         
         # 4. NORTH ARROW / DIRECTION MARKER
-        # Placed Top-Right relative to Axes (0.95, 0.95)
-        # Using annotate to draw arrow and 'N' text
         ax.annotate('N', xy=(0.97, 0.95), xytext=(0.97, 0.88),
                     xycoords='axes fraction', textcoords='axes fraction',
-                    arrowprops=dict(facecolor='white', edgecolor='white', width=4, headwidth=12, headlength=10),
-                    ha='center', va='center', fontsize=16, fontweight='bold', color='white',
-                    path_effects=[PathEffects.withStroke(linewidth=2, foreground="black")])
+                    arrowprops=dict(facecolor='black', edgecolor='black', width=4, headwidth=12, headlength=10),
+                    ha='center', va='center', fontsize=16, fontweight='bold', color='black')
 
         # 5. SCALE BAR LOGIC
         try:
@@ -466,17 +474,16 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             
             bar_height = height_deg * 0.015
             
-            # White scale bar rectangle
+            # Black scale bar rectangle
             rect = mpatches.Rectangle((start_x, start_y), nice_len_deg, bar_height, 
-                                    linewidth=1, edgecolor='white', facecolor='white')
+                                    linewidth=1, edgecolor='black', facecolor='black')
             ax.add_patch(rect)
             
             label = f"{int(nice_len_met/1000)} km" if nice_len_met >= 1000 else f"{int(nice_len_met)} m"
             
-            # Text label above scale bar
+            # Text label above scale bar (Black)
             ax.text(start_x + nice_len_deg/2, start_y + bar_height + (height_deg*0.01), label, 
-                    color='white', ha='center', va='bottom', fontsize=12, fontweight='bold',
-                    path_effects=[PathEffects.withStroke(linewidth=2, foreground="black")])
+                    color='black', ha='center', va='bottom', fontsize=12, fontweight='bold')
         except:
             pass
         
@@ -487,9 +494,9 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
                 patches.append(mpatches.Patch(color=color, label=name))
             legend = ax.legend(handles=patches, loc='upper center', bbox_to_anchor=(0.5, -0.08), 
                                frameon=False, title="Classes", ncol=min(len(class_names), 4))
-            plt.setp(legend.get_title(), color='white', fontweight='bold', fontsize=12)
+            plt.setp(legend.get_title(), color='#002D62', fontweight='bold', fontsize=12)
             for text in legend.get_texts():
-                text.set_color("white")
+                text.set_color("black")
                 text.set_fontsize(10)
                 
         elif cmap_colors and 'min' in vis_params:
@@ -499,13 +506,13 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
             sm.set_array([])
             cax = fig.add_axes([0.92, 0.15, 0.02, 0.7]) 
             cbar = plt.colorbar(sm, cax=cax)
-            cbar.ax.yaxis.set_tick_params(color='white')
-            cbar.set_label('Value', color='white', fontsize=12)
-            plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white', fontsize=10)
+            cbar.ax.yaxis.set_tick_params(color='black')
+            cbar.set_label('Value', color='black', fontsize=12)
+            plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='black', fontsize=10)
         
         buf = BytesIO()
-        # Crucial: Save with facecolor black so text is visible outside the axes
-        plt.savefig(buf, format='jpg', bbox_inches='tight', facecolor='#000000')
+        # Save with white facecolor
+        plt.savefig(buf, format='jpg', bbox_inches='tight', facecolor='#ffffff')
         buf.seek(0)
         plt.close(fig)
         return buf
@@ -521,8 +528,8 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
 with st.sidebar:
     st.markdown("""
         <div style="margin-bottom: 20px;">
-            <h2 style="font-family: 'Rajdhani'; color: #fff; margin:0;">SpecTralNi30</h2>
-            <p style="font-size: 0.8rem; color: #00f2ff; letter-spacing: 2px; margin:0;">GEOSPATIAL CORE</p>
+            <h2 style="font-family: 'Rajdhani'; color: #002D62; margin:0;">SpecTralNi30</h2>
+            <p style="font-size: 0.8rem; color: #0066b2; letter-spacing: 2px; margin:0; font-weight:600;">GEOSPATIAL CORE</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -781,11 +788,11 @@ st.markdown("""
 <div class="hud-header">
     <div>
         <div class="hud-title">SpecTralNi30 ANALYTICS</div>
-        <div style="color:#94a3b8; font-size:0.9rem;">""" + st.session_state['mode'].upper() + """</div>
+        <div style="color:#002D62; font-size:0.9rem; font-weight:600;">""" + st.session_state['mode'].upper() + """</div>
     </div>
     <div style="text-align:right;">
         <span class="hud-badge">SYSTEM ONLINE</span>
-        <div style="font-family:'Rajdhani'; font-size:1.2rem; margin-top:5px;">""" + datetime.now().strftime("%H:%M UTC") + """</div>
+        <div style="font-family:'Rajdhani'; font-size:1.2rem; margin-top:5px; color:#002D62; font-weight:700;">""" + datetime.now().strftime("%H:%M UTC") + """</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -794,15 +801,15 @@ if not st.session_state['calculated']:
     # Welcome View
     st.markdown("""
     <div class="glass-card" style="text-align:center; padding:40px;">
-        <h2 style="color:#fff;">📡 WAITING FOR INPUT</h2>
-        <p style="color:#94a3b8; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
+        <h2 style="color:#002D62;">📡 WAITING FOR INPUT</h2>
+        <p style="color:#1a202c; margin-bottom:20px;">Configure the sensor parameters and region of interest in the sidebar panel.</p>
     </div>
     """, unsafe_allow_html=True)
     # FORCED GOOGLE HYBRID
     m = geemap.Map(height=500, basemap="HYBRID")
     if st.session_state['roi']:
         m.centerObject(st.session_state['roi'], 12)
-        m.addLayer(ee.Image().paint(st.session_state['roi'], 2, 3), {'palette': '#00f2ff'}, 'Target ROI')
+        m.addLayer(ee.Image().paint(st.session_state['roi'], 2, 3), {'palette': '#002D62'}, 'Target ROI')
     m.to_streamlit()
 
 else:
@@ -904,7 +911,7 @@ else:
                 st.markdown('<div class="card-label">💾 DATA EXPORT</div>', unsafe_allow_html=True)
                 try:
                     url = index_img.getDownloadURL({'scale': 30 if "Landsat" in p['platform'] else 10, 'region': roi, 'name': f"{p['idx']}_{sel_date}"})
-                    st.markdown(f"<a href='{url}' style='color:#00f2ff; text-decoration:none;'>🔗 Download GeoTIFF ({p['idx']})</a>", unsafe_allow_html=True)
+                    st.markdown(f"<a href='{url}' style='color:#002D62; font-weight:bold; text-decoration:none;'>🔗 Download GeoTIFF ({p['idx']})</a>", unsafe_allow_html=True)
                 except: st.caption("Region too large for instant link.")
                 
                 st.markdown("---")
