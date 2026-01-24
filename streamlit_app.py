@@ -172,11 +172,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. AUTHENTICATION (CORRECTED) ---
+# --- 3. AUTHENTICATION (DEBUG MODE) ---
 def init_ee():
     """
     Robust authentication for Google Earth Engine using Streamlit Secrets.
-    Handles strict dictionary conversion and private key newline characters.
+    Includes debug output to help diagnose missing headers.
     """
     try:
         # 1. Attempt to load from Streamlit Secrets
@@ -185,7 +185,6 @@ def init_ee():
             service_account_info = dict(st.secrets["gcp_service_account"])
             
             # Critical Fix: Ensure private key newlines are interpreted correctly
-            # If the TOML parser escaped them as literal '\n' strings, replace them with actual newlines
             if "\\n" in service_account_info["private_key"]:
                 service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
             
@@ -199,20 +198,29 @@ def init_ee():
             ee.Initialize(credentials, project=project_id)
             return
 
-        # 2. Local Environment Fallback (if secrets not found)
-        project_id = os.getenv("EE_PROJECT")
-        if project_id:
-             ee.Initialize(project=project_id)
-             return
-
+        # If we reach here, 'gcp_service_account' key is missing from secrets
+        
     except Exception as e:
-        # Fallback for local development or manual input
-        pass
+        st.error(f"⚠️ Secrets found but authentication failed: {e}")
+        st.stop()
+
+    # 2. Local Environment Fallback (if secrets not found)
+    project_id = os.getenv("EE_PROJECT")
+    if project_id:
+         ee.Initialize(project=project_id)
+         return
 
     # 3. Manual Input Fallback
     st.warning("⚠️ Google Cloud Project ID not found in Secrets.")
+    
+    # DEBUG: Help user find the issue
+    if hasattr(st, 'secrets'):
+        found_keys = list(st.secrets.keys())
+        st.info(f"🔎 DEBUG: Streamlit sees these top-level keys in your secrets file: {found_keys}")
+        st.caption("If you see 'type', 'project_id' etc. in the list above, you are missing the [gcp_service_account] header in your secrets.toml file.")
+    
     project_id = st.text_input(
-        "Enter GEE Project ID",
+        "Enter GEE Project ID (Manual Override)",
         value="",
         help="Use your Google Cloud project ID (e.g., ee-yourname).",
     )
