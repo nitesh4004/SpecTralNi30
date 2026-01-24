@@ -587,7 +587,7 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
 # --- 6. SIDEBAR (CONTROL PANEL) ---
 with st.sidebar:
     # --- LOGO INSERTION ---
-    st.image("https://raw.githubusercontent.com/nitesh4004/SpecTralNi30/ec761a706b6355ce9f545e24d0a2415db5c84f04/logo.png", use_container_width=True)
+    st.image("logo.png", use_container_width=True)
     
     st.markdown("""
         <div style="margin-bottom: 20px;">
