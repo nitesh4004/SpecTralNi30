@@ -1,0 +1,14 @@
+streamlit
+earthengine-api
+geemap==0.36.4
+pandas
+numpy
+scikit-learn
+matplotlib
+requests
+Pillow
+geopandas
+leafmap
+xyzservices==2023.10.1
+python-box==7.3.2
+

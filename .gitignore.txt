@@ -1,0 +1,36 @@
+--- Streamlit ---
+
+Keeps your secrets safe. This is the most important line.
+
+.streamlit/secrets.toml
+
+--- Google Earth Engine / Cloud ---
+
+Ignores the JSON key file you downloaded from Google Cloud
+
+*.json
+
+Ignores the local credentials file if you used the "Personal Token" method
+
+.config/earthengine/credentials
+
+--- Python ---
+
+Compiled python files
+
+pycache/
+*.pyc
+
+--- Environments ---
+
+Ignores virtual environment folders
+
+env/
+venv/
+.venv/
+.conda/
+
+--- OS Files ---
+
+.DS_Store
+Thumbs.db

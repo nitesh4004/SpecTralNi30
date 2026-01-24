@@ -1,0 +1,20 @@
+## Streamlit
+.streamlit/secrets.toml
+
+## Google Earth Engine / Cloud
+*.json
+.config/earthengine/credentials
+
+## Python
+__pycache__/
+*.pyc
+
+## Environments
+env/
+venv/
+.venv/
+.conda/
+
+## OS Files
+.DS_Store
+Thumbs.db
