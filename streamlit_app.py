@@ -172,59 +172,66 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. AUTHENTICATION ---
+# --- 3. AUTHENTICATION (CORRECTED) ---
 def init_ee():
-    # Prefer Streamlit secrets for deployment (guard if secrets file missing)
+    """
+    Robust authentication for Google Earth Engine using Streamlit Secrets.
+    Handles strict dictionary conversion and private key newline characters.
+    """
     try:
+        # 1. Attempt to load from Streamlit Secrets
         if "gcp_service_account" in st.secrets:
-            secret_dict = dict(st.secrets["gcp_service_account"])
-        elif st.secrets.get("type") == "service_account":
-            # Allow secrets stored as a raw service account JSON
-            secret_dict = dict(st.secrets)
-        else:
-            secret_dict = None
-
-        if secret_dict:
-            service_account = secret_dict.get("client_email", "")
-            project_id = (
-                secret_dict.get("project_id", "")
-                or st.secrets.get("ee_project", "")
-                or os.getenv("EE_PROJECT", "")
-            )
+            # Convert AttrDict to standard Python dict
+            service_account_info = dict(st.secrets["gcp_service_account"])
+            
+            # Critical Fix: Ensure private key newlines are interpreted correctly
+            # If the TOML parser escaped them as literal '\n' strings, replace them with actual newlines
+            if "\\n" in service_account_info["private_key"]:
+                service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+            
+            # Authenticate
             credentials = ee.ServiceAccountCredentials(
-                service_account, key_data=json.dumps(secret_dict)
+                service_account_info["client_email"],
+                key_data=json.dumps(service_account_info)
             )
-            ee.Initialize(credentials, project=project_id or None)
+            
+            project_id = service_account_info.get("project_id")
+            ee.Initialize(credentials, project=project_id)
             return
-    except Exception:
-        # No secrets file found; fall back to local auth
+
+        # 2. Local Environment Fallback (if secrets not found)
+        project_id = os.getenv("EE_PROJECT")
+        if project_id:
+             ee.Initialize(project=project_id)
+             return
+
+    except Exception as e:
+        # Fallback for local development or manual input
         pass
 
-    # Local development fallback
-    project_id = (
-        st.session_state.get("ee_project")
-        or os.getenv("EE_PROJECT", "")
-        or "ee-niteshswansat"
+    # 3. Manual Input Fallback
+    st.warning("⚠️ Google Cloud Project ID not found in Secrets.")
+    project_id = st.text_input(
+        "Enter GEE Project ID",
+        value="",
+        help="Use your Google Cloud project ID (e.g., ee-yourname).",
     )
-    if not project_id:
-        st.warning("Google Earth Engine now requires a Cloud Project ID.")
-        project_id = st.text_input(
-            "GEE Project ID",
-            value="",
-            help="Use your Google Cloud project ID (not name).",
-        )
-        if project_id:
-            st.session_state["ee_project"] = project_id.strip()
+    if project_id:
+        try:
+            ee.Initialize(project=project_id)
             st.rerun()
+        except Exception as e:
+             st.error(f"Authentication failed: {e}")
+             st.stop()
+    else:
         st.stop()
-    ee.Initialize(project=project_id)
 
+# Initialize Authentication
 try:
     init_ee()
 except Exception as e:
     st.error(
-        "⚠️ Authentication Error. Run `earthengine authenticate` in your terminal, "
-        "then restart the app. For Streamlit Cloud, add secrets.\n\n"
+        "⚠️ Authentication Error. Please check your .streamlit/secrets.toml file.\n"
         f"Details: {e}"
     )
     st.stop()
@@ -594,7 +601,7 @@ def generate_static_map_display(image, roi, vis_params, title, cmap_colors=None,
 # --- 6. SIDEBAR (CONTROL PANEL) ---
 with st.sidebar:
     # --- LOGO INSERTION ---
-    st.image("logo.png", use_container_width=True)
+    st.image("https://raw.githubusercontent.com/nitesh4004/SpecTralNi30/ec761a706b6355ce9f545e24d0a2415db5c84f04/logo.png", use_container_width=True)
     
     st.markdown("""
         <div style="margin-bottom: 20px;">
