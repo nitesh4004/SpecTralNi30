@@ -178,6 +178,13 @@ def init_ee():
     try:
         if "gcp_service_account" in st.secrets:
             secret_dict = dict(st.secrets["gcp_service_account"])
+        elif st.secrets.get("type") == "service_account":
+            # Allow secrets stored as a raw service account JSON
+            secret_dict = dict(st.secrets)
+        else:
+            secret_dict = None
+
+        if secret_dict:
             service_account = secret_dict.get("client_email", "")
             project_id = (
                 secret_dict.get("project_id", "")
