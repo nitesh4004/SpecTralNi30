@@ -18,3 +18,45 @@ venv/
 ## OS Files
 .DS_Store
 Thumbs.db
+
+
+## Streamlit Secrets (CRITICAL - NEVER COMMIT)
+.streamlit/secrets.toml
+
+## IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+## Data & Caches
+*.cache/
+cache/
+.streamlit/
+
+## Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+## Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+## Generated Files
+*.csv
+*.geojson
+*.tiff
+*.tif
+
+## Build & Dist
+build/
+dist/
+*.egg-info/
+
+## Environment Files
+.env
+.env.local
+.env.*.local
